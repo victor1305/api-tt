@@ -33,7 +33,7 @@ exports.savePayInfo = async (req, res, next) => {
     date: req.body.month,
     status: req.body.status,
     price: req.body.price,
-    type: req.body.paytype,
+    type: req.body.type,
     beneficiary: req.body.beneficiary,
     information: req.body.information
   })
@@ -148,6 +148,8 @@ exports.getPaysList = async (req, res, next) => {
       }
     ])
 
+    paymentList.sort((a, b) => (a.client[0].localeCompare(b.client[0])))
+
     res.json({
       data: paymentList
     })
@@ -238,6 +240,48 @@ exports.getPaymentsListProfile = async (req, res, next) => {
       data: paymentList
     })
 
+  } catch (error) {
+    res.status(400).json(error)
+  }
+}
+
+//AQUI CONSULTA PARA GRÁFICAS
+
+exports.getPaysListByYear = async (req, res, next) => {
+
+  const year = req.params.year
+
+  try {
+  
+    const paymentList = await PayInfo.aggregate([
+      {
+        $match: { date: { $gte: new Date(`${year}-01-01T00:00:00.720Z`), $lt: new Date(`${year}-12-31T00:00:00.720Z`) } }
+      },
+      {
+        $lookup: {
+          from: 'clients',
+          localField: 'client',
+          foreignField: '_id',
+          as: 'client',
+        }
+      },
+      {
+        $addFields: {
+          clientId: "$client._id",
+          client: "$client.name",
+        }
+      },
+      {
+        $sort: {
+          'client': 1
+        }
+      }
+    ])
+
+    res.json({
+      data: paymentList
+    })
+    
   } catch (error) {
     res.status(400).json(error)
   }

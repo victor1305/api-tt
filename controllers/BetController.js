@@ -100,6 +100,175 @@ exports.getBetCodes = async (req, res, next) => {
 
 }
 
+exports.getDayBalance = async (req, res, next) => {
+
+  const today = new Date()
+  let yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate())
+  yesterday.setHours(02,00,00)
+
+  try {
+
+    const dayBalance = await Bet.aggregate([
+      {
+        $match: { date: { $gte: yesterday, $lt: today }}
+      },
+      {
+        $group: {
+          _id: '',
+          balance: { $sum: "$profit" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          balance: '$balance'
+        }
+      }
+    ])
+
+    res.json({
+      data: dayBalance
+    })
+    
+  } catch (error) {
+    res.status(400).json(error)
+  }
+  
+
+}
+
+exports.getYesterdayBalance = async (req, res, next) => {
+
+  const today = new Date()
+  let yesterday = new Date(today)
+  let twoDaysAgo = new Date(today)
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 1)
+  yesterday.setDate(yesterday.getDate() - 1)
+  twoDaysAgo.setHours(02,00,00)
+  yesterday.setHours(24,00,00)
+
+  try {
+
+    const dayBalance = await Bet.aggregate([
+      {
+        $match: { date: { $gte: twoDaysAgo, $lt: yesterday }}
+      },
+      {
+        $group: {
+          _id: '',
+          balance: { $sum: "$profit" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          balance: '$balance'
+        }
+      }
+    ])
+
+    res.json({
+      data: dayBalance
+    })
+    
+  } catch (error) {
+    res.status(400).json(error)
+  }
+  
+
+}
+
+exports.getWeekBalance = async (req, res, next) => {
+  const today = new Date()
+  let weekAgo = new Date(today)
+  weekAgo.setDate(weekAgo.getDate() - 6)
+  weekAgo.setHours(02,00,00)
+
+  try {
+
+    const weekBalance = await Bet.aggregate([
+      {
+        $match: { date: { $gte: weekAgo, $lt: today }}
+      },
+      {
+        $group: {
+          _id: '',
+          balance: { $sum: "$profit" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          balance: '$balance'
+        }
+      }
+    ])
+
+    res.json({
+      data: weekBalance
+    })
+    
+  } catch (error) {
+    res.status(400).json(error)
+  }
+
+}
+
+exports.getRangeBalance = async (req, res, next) => {
+  let start = new Date(req.params.start)
+  start.setHours(02,00,00)
+  let end = new Date(req.params.end)
+  end.setHours(24,00,00)
+
+  try {
+
+    const rangeBalance = await Bet.aggregate([
+      {
+        $match: { date: { $gte: start, $lt: end }}
+      },
+      {
+        $group: {
+          _id: '',
+          balance: { $sum: "$profit" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          balance: '$balance'
+        }
+      }
+    ])
+
+    res.json({
+      data: rangeBalance
+    })
+    
+  } catch (error) {
+    res.status(400).json(error)
+  }
+
+}
+
+exports.getBetByMonth = async (req, res, next) => {
+  const month = req.query.month < 10 ? `0${req.query.month}` : req.query.month
+  const year = req.query.year
+  let yearLimit = parseInt(month) === 12 ? parseInt(year) + 1 : req.query.year
+  let monthLimit = parseInt(month) === 12 ? 1 : parseInt(month) + 1
+  monthLimit = monthLimit < 10 ? `0${monthLimit}` : monthLimit
+
+  try {
+    const betList = await Bet.find({date: { $gte: new Date(`${year}-${month}-01T00:00:00.720Z`), $lt: new Date(`${yearLimit}-${monthLimit}-01T00:00:00.720Z`) }})
+    res.json({
+      data: betList
+    })
+    
+  } catch (error) {
+    res.status(400).json(error)
+  }
+}
+
 exports.readHomeBets = async (req, res, next) => {
   Bet.find({status: { "$ne": "pending"}}).sort({date: -1}).limit(6)
     .then(response => res.json(response))

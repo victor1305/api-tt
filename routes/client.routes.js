@@ -10,6 +10,7 @@ router.delete('/borrar-pago/:paymentId/:clientId/:userId', verifyToken, ClientCo
 router.get('/lista-clientes', ClientController.getClientList)
 router.get('/lista-administradores', ClientController.getAdminsList)
 router.get('/lista-pagos/:year/:month', ClientController.getPaysList)
+router.get('/lista-pagos-anual/:year', ClientController.getPaysListByYear)
 router.get('/informacion-cliente/:id', ClientController.getClientInfo)
 router.get('/lista-apuestas-perfil/:id/:year/:month', ClientController.getPaymentsListProfile)
 
