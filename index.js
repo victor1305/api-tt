@@ -21,7 +21,9 @@ const cors = require('cors');
 const whitelist = [
     "http://localhost:3000",
     "https://turftipster.es",
-    "https://cms-tt-front.herokuapp.com"
+    "https://cms-tt-front.herokuapp.com",
+    "https://cms-tt-static.onrender.com",
+    "https://cms-tt.onrender.com"
 ]
 const corsOptions = {
     origin: (origin, cb) => {
