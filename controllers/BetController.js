@@ -352,7 +352,7 @@ exports.statsByYearAndType = async (req, res, next) => {
           units_staked: arrayStake.toFixed(2),
           profit: arrayProfit.toFixed(2),
           yield: ((arrayProfit * 100) / arrayStake).toFixed(2),
-          [type]: dataTypeList[i][type === 'category' ? 'betCode' : type],
+          [type  === 'betCode' ? 'category' : type]: dataTypeList[i][type],
           ...(type !== 'stake' && { medium_stake: (arrayStake / arrayTotal.length).toFixed(2) })         
         }
 
