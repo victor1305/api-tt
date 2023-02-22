@@ -306,7 +306,7 @@ exports.statsByYearAndMonth = async (req, res, next) => {
     }
 
     res.json({
-      data: betsArr
+      data: loopArray
     })
 
   } catch (error) {
@@ -317,7 +317,7 @@ exports.statsByYearAndMonth = async (req, res, next) => {
 
 exports.statsByYearAndType = async (req, res, next) => {
   const year = req.params.year
-  const type = req.params.type
+  const type = req.params.type === 'category' ? 'betCode' : req.params.type
 
   try {
     const betList = await Bet.find({date:{$gte: `${year}-01-01T00:00:00Z`,$lte: `${year}-12-31T23:59:59Z`}, status: { "$ne": "pending"}})
