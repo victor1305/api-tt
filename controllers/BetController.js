@@ -293,19 +293,17 @@ exports.statsByYearAndMonth = async (req, res, next) => {
           bets: arrayTotal.length,
           wins: arrayWin.length,
           loss: arrayLoss.length,
-          void: arrayVoid.length,
-          percent: ((arrayWin.length / (arrayLoss.length + arrayWin.length)) * 100).toFixed(2),
-          totalUds: arrayStake.toFixed(2),
-          profitUds: arrayProfit.toFixed(2),
+          voids: arrayVoid.length,
+          win_percent: ((arrayWin.length / (arrayLoss.length + arrayWin.length)) * 100).toFixed(2),
+          units_staked: arrayStake.toFixed(2),
+          profit: arrayProfit.toFixed(2),
           yield: ((arrayProfit * 100) / arrayStake).toFixed(2),
-          mes: monthsNames[i],
-          averageStake: (arrayStake / arrayTotal.length).toFixed(2)     
+          month: monthsNames[i],
+          medium_stake: (arrayStake / arrayTotal.length).toFixed(2)     
         }
 
       loopArray.push(obj)
     }
-
-    const betsArr = loopArray.filter(elm => (elm.bets > 0))
 
     res.json({
       data: betsArr
@@ -349,13 +347,13 @@ exports.statsByYearAndType = async (req, res, next) => {
           bets: arrayTotal.length,
           wins: arrayWin.length,
           loss: arrayLoss.length,
-          void: arrayVoid.length,
-          percent: ((arrayWin.length / (arrayLoss.length + arrayWin.length)) * 100).toFixed(2),
-          totalUds: arrayStake.toFixed(2),
-          profitUds: arrayProfit.toFixed(2),
+          voids: arrayVoid.length,
+          win_percent: ((arrayWin.length / (arrayLoss.length + arrayWin.length)) * 100).toFixed(2),
+          units_staked: arrayStake.toFixed(2),
+          profit: arrayProfit.toFixed(2),
           yield: ((arrayProfit * 100) / arrayStake).toFixed(2),
           [type]: dataTypeList[i][type === 'category' ? 'betCode' : type],
-          ...(type !== 'stake' && { averageStake: (arrayStake / arrayTotal.length).toFixed(2) })         
+          ...(type !== 'stake' && { medium_stake: (arrayStake / arrayTotal.length).toFixed(2) })         
         }
 
       loopArray.push(obj)
