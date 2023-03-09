@@ -305,6 +305,36 @@ exports.statsByYearAndMonth = async (req, res, next) => {
       loopArray.push(obj)
     }
 
+    let totalBets = 0
+    let totalWins = 0
+    let totalLoss = 0
+    let totalVoids = 0
+    let totalUnitsStaked = 0
+    let totalProfit = 0
+    
+
+    for (let i = 0; i < loopArray.length; i++) {
+      totalBets += loopArray[i].bets
+      totalWins += loopArray[i].wins
+      totalLoss += loopArray[i].loss
+      totalVoids += loopArray[i].voids
+      totalUnitsStaked += parseFloat(loopArray[i].units_staked)
+      totalProfit += parseFloat(loopArray[i].profit)
+    }
+
+    loopArray.push({
+      bets: totalBets,
+      wins: totalWins,
+      loss: totalLoss,
+      voids: totalVoids,
+      win_percent: ((totalWins / (totalLoss + totalWins)) * 100).toFixed(2),
+      units_staked: totalUnitsStaked.toFixed(2),
+      profit: totalProfit.toFixed(2),
+      yield: ((totalProfit * 100) / totalUnitsStaked).toFixed(2),
+      month: 'Total Año',
+      medium_stake: (totalUnitsStaked / totalBets).toFixed(2)
+    })
+
     res.json({
       data: loopArray
     })
@@ -372,7 +402,7 @@ exports.statsByYearAndType = async (req, res, next) => {
 }
 
 exports.readHomeBets = async (req, res, next) => {
-  Bet.find({status: { "$ne": "pending"}}).sort({date: -1}).limit(6)
+  Bet.find({status: { "$ne": "pending"}}).sort({date: -1}).limit(5)
     .then(response => res.json(response))
     .catch(err => next(err))  
 }
