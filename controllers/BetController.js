@@ -331,7 +331,7 @@ exports.statsByYearAndMonth = async (req, res, next) => {
       units_staked: totalUnitsStaked.toFixed(2),
       profit: totalProfit.toFixed(2),
       yield: ((totalProfit * 100) / totalUnitsStaked).toFixed(2),
-      month: 'Total Año',
+      month: 'Total Anual',
       medium_stake: (totalUnitsStaked / totalBets).toFixed(2)
     })
 
@@ -390,7 +390,7 @@ exports.statsByYearAndType = async (req, res, next) => {
     }
 
     const betsArr = loopArray.filter(elm => (elm.bets > 0))
-    if (type !== 'stake') betsArr.sort((a, b) => b.profitUds - a.profitUds)
+    if (type !== 'stake') betsArr.sort((a, b) => b.profit - a.profit)
 
     res.json({
       data: betsArr
