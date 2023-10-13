@@ -1,4 +1,5 @@
 const Bet = require("../models/Bet.model");
+const PersonalBet = require("../models/PersonalBet.model");
 const ParameterRacecourse = require("../models/Racecourse.model");
 const ParameterStake = require("../models/Stake.model");
 const ParameterBetCode = require("../models/BetCode.model");
@@ -11,6 +12,18 @@ exports.saveBet = async (req, res, next) => {
   }
 
   Bet.create(req.body)
+    .then((response) => res.json(response))
+    .catch((err) => next(err));
+};
+
+exports.savePersonalBet = async (req, res, next) => {
+  req.body.profit =
+    parseFloat(req.body.finalBalance) +
+    parseFloat(req.body.withdraws) -
+    parseFloat(req.body.initialBalance) -
+    parseFloat(req.body.deposits);
+
+  PersonalBet.create(req.body)
     .then((response) => res.json(response))
     .catch((err) => next(err));
 };
@@ -300,6 +313,28 @@ exports.getRangeBalance = async (req, res, next) => {
 
     res.json({
       data: rangeBalance,
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+exports.getPersonalBetsByMonth = async (req, res, next) => {
+  const month = req.query.month < 10 ? `0${req.query.month}` : req.query.month;
+  const year = req.query.year;
+  let yearLimit = parseInt(month) === 12 ? parseInt(year) + 1 : req.query.year;
+  let monthLimit = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
+  monthLimit = monthLimit < 10 ? `0${monthLimit}` : monthLimit;
+
+  try {
+    const personalBetsList = await PersonalBet.find({
+      date: {
+        $gte: new Date(`${year}-${month}-01T00:00:00.720Z`),
+        $lt: new Date(`${yearLimit}-${monthLimit}-01T00:00:00.720Z`),
+      },
+    });
+    res.json({
+      data: personalBetsList,
     });
   } catch (error) {
     res.status(400).json(error);
@@ -606,8 +641,26 @@ exports.editBet = async (req, res, next) => {
     .catch((err) => next(err));
 };
 
+exports.editPersonalBet = async (req, res, next) => {
+  req.body.profit =
+    parseFloat(req.body.finalBalance) +
+    parseFloat(req.body.withdraws) -
+    parseFloat(req.body.initialBalance) -
+    parseFloat(req.body.deposits);
+    
+  PersonalBet.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then((personalBet) => res.json(personalBet))
+    .catch((err) => next(err));
+};
+
 exports.deleteBet = async (req, res, next) => {
   Bet.findByIdAndDelete(req.params.id)
+    .then((response) => res.json(response))
+    .catch((err) => next(err));
+};
+
+exports.deletePersonalBet = async (req, res, next) => {
+  PersonalBet.findByIdAndDelete(req.params.id)
     .then((response) => res.json(response))
     .catch((err) => next(err));
 };
