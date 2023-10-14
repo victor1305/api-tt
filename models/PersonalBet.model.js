@@ -8,6 +8,7 @@ const personalBetSchema = new Schema(
     },
     initialBalance: {
       type: Number,
+      default: 0,
     },
     deposits: {
       type: Number,
@@ -23,6 +24,7 @@ const personalBetSchema = new Schema(
     },
     finalBalance: {
       type: Number,
+      default: 0,
     },
     userId: {
       type: String,

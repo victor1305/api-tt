@@ -253,6 +253,36 @@ exports.getYesterdayBalance = async (req, res, next) => {
   }
 };
 
+exports.getPersonalBalancesByMonth = async (req, res) => {
+  try {
+    const { month, year } = req.params;
+
+    const startDate = new Date(`${year}-${month}-01`);
+    const endDate = new Date(`${year}-${parseInt(month) + 1}-01`);
+
+    const result = await PersonalBet.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { bookie: "$bookie", userId: "$userId" },
+          profit: { $sum: "$profit" },
+          deposits: { $sum: "$deposits" },
+          withdraws: { $sum: "$withdraws" },
+        },
+      },
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.getWeekBalance = async (req, res, next) => {
   const today = new Date();
   let weekAgo = new Date(today);
@@ -326,17 +356,61 @@ exports.getPersonalBetsByMonth = async (req, res, next) => {
   let monthLimit = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
   monthLimit = monthLimit < 10 ? `0${monthLimit}` : monthLimit;
 
+  const userId = req.params.id;
+
   try {
+    const startDate = new Date(`${year}-${month}-01T00:00:00.720Z`);
+    const endDate = new Date(`${yearLimit}-${monthLimit}-01T00:00:00.720Z`);
     const personalBetsList = await PersonalBet.find({
+      userId: userId,
       date: {
-        $gte: new Date(`${year}-${month}-01T00:00:00.720Z`),
-        $lt: new Date(`${yearLimit}-${monthLimit}-01T00:00:00.720Z`),
+        $gte: startDate,
+        $lt: endDate,
       },
     });
+    const balances = await PersonalBet.aggregate([
+      {
+        $match: {
+          userId: userId,
+          date: {
+            $gte: startDate,
+            $lt: endDate,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$bookie",
+          profit: { $sum: "$profit" },
+          deposits: { $sum: "$deposits" },
+          withdraws: { $sum: "$withdraws" },
+        },
+      },
+    ]);
+    const yearBalances = await PersonalBet.aggregate([
+      {
+        $match: {
+          userId: userId,
+          date: {
+            $gte: new Date(`${year}-01-01T00:00:00.720Z`),
+            $lt: new Date(`${year}-12-31T23:59:59.720Z`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$bookie",
+          profit: { $sum: "$profit" },
+          deposits: { $sum: "$deposits" },
+          withdraws: { $sum: "$withdraws" },
+        },
+      },
+    ]);
     res.json({
-      data: personalBetsList,
+      data: { personalBetsList, balances, yearBalances },
     });
   } catch (error) {
+    console.log("CATCH");
     res.status(400).json(error);
   }
 };
@@ -647,7 +721,7 @@ exports.editPersonalBet = async (req, res, next) => {
     parseFloat(req.body.withdraws) -
     parseFloat(req.body.initialBalance) -
     parseFloat(req.body.deposits);
-    
+
   PersonalBet.findByIdAndUpdate(req.params.id, req.body, { new: true })
     .then((personalBet) => res.json(personalBet))
     .catch((err) => next(err));
