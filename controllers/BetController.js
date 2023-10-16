@@ -349,6 +349,31 @@ exports.getRangeBalance = async (req, res, next) => {
   }
 };
 
+exports.getPersonalBetsByDay = async (req, res, next) => {
+  const month = req.query.month;
+  const year = req.query.year;
+  const day = req.query.day;
+
+  const userId = req.params.id;
+
+  try {
+    const startDate = new Date(`${year}-${month}-${day}T00:00:00.720Z`);
+    const endDate = new Date(`${year}-${month}-${day}T23:59:59.720Z`);
+    const personalBetsList = await PersonalBet.find({
+      userId: userId,
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+    res.json({
+      data: personalBetsList ,
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
 exports.getPersonalBetsByMonth = async (req, res, next) => {
   const month = req.query.month < 10 ? `0${req.query.month}` : req.query.month;
   const year = req.query.year;
@@ -410,7 +435,6 @@ exports.getPersonalBetsByMonth = async (req, res, next) => {
       data: { personalBetsList, balances, yearBalances },
     });
   } catch (error) {
-    console.log("CATCH");
     res.status(400).json(error);
   }
 };
