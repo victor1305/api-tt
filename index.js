@@ -24,6 +24,7 @@ const whitelist = [
     'https://www.turftipster.es',
     "https://cms-tt-front.herokuapp.com",
     "https://cms-tt-static.onrender.com",
+    "https://tt-cms-next.vercel.app",
     "https://cms-tt.onrender.com"
 ]
 const corsOptions = {
