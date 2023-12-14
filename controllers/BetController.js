@@ -569,6 +569,89 @@ exports.statsByYearAndMonth = async (req, res, next) => {
   }
 };
 
+exports.statsByYearMonthAndType = async (req, res) => {
+  const year = req.params.year;
+  const month = req.params.month;
+  const type = req.params.type === "category" ? "betCode" : req.params.type;
+
+  try {
+    const betList = await Bet.find({
+      date: {
+        $gte: month !== '00' ? `${year}-${month}-01T00:00:00Z` : `${year}-01-01T00:00:00Z`,
+        $lte: month !== '00' ? `${month === '12' ? parseInt(year) + 1 : year}-${
+          parseInt(month) + 1 > 9 && parseInt(month) < 12
+            ? parseInt(month) + 1
+            : parseInt(month) > 11
+            ? '01'
+            : `0${parseInt(month) + 1}`
+        }-01T00:00:00.000Z` : `${year}-12-31T23:59:59Z`
+      },
+      status: { $ne: "pending" },
+    });
+    let dataTypeList;
+
+    if (type === "stake") {
+      dataTypeList = await ParameterStake.find().sort({ stake: 1 });
+    } else if (type === "racecourse") {
+      dataTypeList = await ParameterRacecourse.find().sort({ racecourse: 1 });
+    } else {
+      dataTypeList = await ParameterBetCode.find().sort({ betCode: 1 });
+    }
+
+    const loopArray = [];
+
+    for (let i = 0; i < dataTypeList.length; i++) {
+      const arrayTotal = betList.filter(
+        (elm) => elm[type] === dataTypeList[i][type]
+      );
+      const arrayWin = betList.filter(
+        (elm) => elm[type] === dataTypeList[i][type] && elm.status === "win"
+      );
+      const arrayLoss = betList.filter(
+        (elm) => elm[type] === dataTypeList[i][type] && elm.status === "loss"
+      );
+      const arrayVoid = betList.filter(
+        (elm) => elm[type] === dataTypeList[i][type] && elm.status === "void"
+      );
+      const arrayStake = arrayTotal.reduce((acc, elm) => {
+        return acc + elm.stake;
+      }, 0);
+      const arrayProfit = arrayTotal.reduce((acc, elm) => {
+        return acc + elm.profit;
+      }, 0);
+
+      const obj = {
+        bets: arrayTotal.length,
+        wins: arrayWin.length,
+        loss: arrayLoss.length,
+        voids: arrayVoid.length,
+        win_percent: (
+          (arrayWin.length / (arrayLoss.length + arrayWin.length)) *
+          100
+        ).toFixed(2),
+        units_staked: arrayStake.toFixed(2),
+        profit: arrayProfit.toFixed(2),
+        yield: ((arrayProfit * 100) / arrayStake).toFixed(2),
+        [type === "betCode" ? "category" : type]: dataTypeList[i][type],
+        ...(type !== "stake" && {
+          medium_stake: (arrayStake / arrayTotal.length).toFixed(2),
+        }),
+      };
+
+      loopArray.push(obj);
+    }
+
+    const betsArr = loopArray.filter((elm) => elm.bets > 0);
+    if (type !== "stake") betsArr.sort((a, b) => b.profit - a.profit);
+    
+    res.json({
+      data: betsArr,
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
 exports.statsByYearAndType = async (req, res, next) => {
   const year = req.params.year;
   const type = req.params.type === "category" ? "betCode" : req.params.type;
