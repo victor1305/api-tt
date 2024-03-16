@@ -349,6 +349,29 @@ exports.getRangeBalance = async (req, res, next) => {
   }
 };
 
+exports.getBetsByDay = async (req, res, next) => {
+  const month = req.query.month;
+  const year = req.query.year;
+  const day = req.query.day;
+
+  try {
+    const startDate = new Date(`${year}-${month}-${day}T00:00:00.720Z`);
+    const endDate = new Date(`${year}-${month}-${day}T23:59:59.720Z`);
+    const betList = await Bet.find({
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+    res.json({
+      data: betList ,
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+
 exports.getPersonalBetsByDay = async (req, res, next) => {
   const month = req.query.month;
   const year = req.query.year;
