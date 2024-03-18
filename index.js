@@ -25,7 +25,8 @@ const whitelist = [
     "https://cms-tt-front.herokuapp.com",
     "https://cms-tt-static.onrender.com",
     "https://tt-cms-next.vercel.app",
-    "https://cms-tt.onrender.com"
+    "https://cms-tt.onrender.com",
+    "http://127.0.0.1:4040/"
 ]
 const corsOptions = {
     origin: (origin, cb) => {
@@ -41,11 +42,13 @@ app.use(cors(corsOptions));
 const authRoutes = require('./routes/user.routes')
 const betsRoutes = require('./routes/bets.routes')
 const clientsRoutes = require('./routes/client.routes')
+const racesRoutes = require('./routes/races.routes')
 
 // route middlewares
 app.use('/api', authRoutes)
 app.use('/api/apuestas', betsRoutes)
 app.use('/api/clientes', clientsRoutes)
+app.use('/api/races', racesRoutes)
 
 // iniciar server
 const PORT = process.env.PORT || 3030;
