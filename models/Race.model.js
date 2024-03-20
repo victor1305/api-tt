@@ -3,6 +3,9 @@ const Schema = mongoose.Schema;
 
 const raceSchema = new Schema(
   {
+    racecourseCode: {
+      type: String,
+    },
     racecourse: {
       type: String,
       required: true,

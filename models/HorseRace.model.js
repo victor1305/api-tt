@@ -34,8 +34,14 @@ const horseRaceSchema = new Schema(
     position: {
       type: String,
     },
+    racecourseCode: {
+      type: String,
+    },
     racecourse: {
       type: String,
+    },
+    supplement: {
+      type: Boolean
     },
     race: {
       type: Number,
