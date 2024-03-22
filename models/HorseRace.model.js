@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const horseRaceSchema = new Schema(
   {
     number: {
-      type: Number
+      type: Number,
     },
     horse: {
       type: mongoose.ObjectId,
@@ -18,6 +18,12 @@ const horseRaceSchema = new Schema(
     },
     jockey: {
       type: String,
+    },
+    unload: {
+      type: Number,
+    },
+    weight: {
+      type: Number,
     },
     trainer: {
       type: String,
@@ -41,7 +47,10 @@ const horseRaceSchema = new Schema(
       type: String,
     },
     supplement: {
-      type: Boolean
+      type: Boolean,
+    },
+    corde: {
+      type: String
     },
     race: {
       type: Number,
@@ -59,10 +68,13 @@ const horseRaceSchema = new Schema(
       type: String,
     },
     mud: {
-      type: Boolean
+      type: Boolean,
     },
     date: {
       type: Date,
+    },
+    debut: {
+      type: Boolean,
     },
   },
   {

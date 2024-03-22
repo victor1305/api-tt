@@ -21,6 +21,9 @@ const raceSchema = new Schema(
     raceType: {
       type: String,
     },
+    corde: {
+      type: String
+    },
     distance: {
       type: Number,
     },
