@@ -41,7 +41,6 @@ exports.getDrivesCorrections = async (req, res, next) => {
   const horses = req.body;
   try {
     for (let i = 0; i < horses.length; i++) {
-      console.log(horses[i])
       if (horses[i].age) {
         const horseData = await Horse.findOne({
           name: horses[i].horseName.toUpperCase(),
