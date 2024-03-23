@@ -76,6 +76,9 @@ const horseRaceSchema = new Schema(
     debut: {
       type: Boolean,
     },
+    driveRest: {
+      type: String
+    }
   },
   {
     timestamps: true,

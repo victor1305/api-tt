@@ -2,6 +2,126 @@ const HorseRace = require("../models/HorseRace.model");
 const Horse = require("../models/Horse.model");
 const Race = require("../models/Race.model");
 
+exports.createOldPrevValues = async (req, res, next) => {
+  const horses = req.body;
+
+  try {
+    for (let i = 0; i < horses.length; i++) {
+      const horseData = await Horse.findOne({
+        name: horses[i].name.toUpperCase(),
+        year: new Date().getFullYear() - parseInt(horses[i].age),
+        table: "FRA",
+      });
+
+      if (horseData && horseData.values.length === 1 && horses[i].races.length) {
+        const valuesIds = [];
+        for (let j = 0; j < horses[i].races.length; j++) {
+          const horseRaceData = new HorseRace({
+            horse: horseData._id,
+            value: horses[i].races[j].value,
+            surface: horses[i].races[j].surface,
+            mud: horses[i].races[j].mud,
+            date: horses[i].races[j].date,
+          });
+          const saveHorseRaceData = await horseRaceData.save();
+          valuesIds.push(saveHorseRaceData._id);
+        }
+        horseData.values = [...valuesIds, ...horseData.values];
+        await horseData.save();
+      }
+    }
+    res.json({ message: "Valores previos de caballos creados exitosamente" });
+  } catch (error) {
+    console.error(error); 
+    next(error);
+  }
+};
+
+exports.getDrivesCorrections = async (req, res, next) => {
+  const horses = req.body;
+  try {
+    for (let i = 0; i < horses.length; i++) {
+      console.log(horses[i])
+      if (horses[i].age) {
+        const horseData = await Horse.findOne({
+          name: horses[i].horseName.toUpperCase(),
+          year: new Date().getFullYear() - parseInt(horses[i].age),
+          table: "FRA",
+        });
+  
+        if (horseData) {
+          const day = horses[i].date.substring(0, 2);
+          const month = horses[i].date.substring(2, 4);
+          const year = horses[i].date.substring(4, 8);
+          const date = new Date(year, month - 1, day);
+  
+          const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+          const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+  
+          const raceData = await HorseRace.findOne({
+            horse: horseData._id,
+            date: {
+              $gte: startOfDay,
+              $lt: endOfDay,
+            },
+          });
+
+          raceData.value = horses[i].value
+          raceData.mud = horses[i].mud
+  
+          await raceData.save()
+        }
+      }
+    }
+    res.json('Correcciones guardadas')
+  } catch (error) {
+    console.error(error); 
+    next(error);
+  }
+
+}
+
+exports.getDrivesRests = async (req, res, next) => {
+  const horses = req.body;
+  try {
+    for (let i = 0; i < horses.length; i++) {
+      if (horses[i].age) {
+        const horseData = await Horse.findOne({
+          name: horses[i].horseName.toUpperCase(),
+          year: new Date().getFullYear() - parseInt(horses[i].age),
+          table: "FRA",
+        });
+  
+        if (horseData) {
+          const day = horses[i].date.substring(0, 2);
+          const month = horses[i].date.substring(2, 4);
+          const year = horses[i].date.substring(4, 8);
+          const date = new Date(year, month - 1, day);
+  
+          const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+          const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+  
+          const raceData = await HorseRace.findOne({
+            horse: horseData._id,
+            date: {
+              $gte: startOfDay,
+              $lt: endOfDay,
+            },
+          });
+
+          raceData.driveRest = horses[i].rest
+  
+          await raceData.save()
+        }
+      }
+    }
+    res.json('Restas guardadas')
+  } catch (error) {
+    console.error(error); 
+    next(error);
+  }
+}
+
 exports.createHorse = async (req, res, next) => {
   const horseData = new Horse({
     name: req.body.name,
@@ -235,7 +355,10 @@ exports.actualizar = async (req, res) => {
       const endDate = new Date(year, month, day + 1);
 
       for (let j = 0; j < participants.length; j++) {
-        if (participants[j].race === "PUR-SANG" && participants[j].supplement > 0) {
+        if (
+          participants[j].race === "PUR-SANG" &&
+          participants[j].supplement > 0
+        ) {
           const horse = await Horse.findOne({
             name: participants[j].nom.toUpperCase(),
             year: new Date().getFullYear() - participants[j].age,
@@ -250,7 +373,7 @@ exports.actualizar = async (req, res) => {
               },
             });
             //horseRace.debut = true
-            horseRace.supplement = true
+            horseRace.supplement = true;
             // horseRace.weight = participants[j].handicapPoids / 10;
             // horseRace.unload =
             //   (participants[j].poidsConditionMonte &&
@@ -355,7 +478,7 @@ exports.createRacesByDate = async (req, res) => {
             surface: racingTrack,
             distance: raceInfo.distance,
             time: timeFormated,
-            corde: raceInfo.corde
+            corde: raceInfo.corde,
           });
 
           for (let j = 0; j < participants.length; j++) {
