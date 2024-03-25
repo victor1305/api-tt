@@ -13,7 +13,11 @@ exports.createOldPrevValues = async (req, res, next) => {
         table: "FRA",
       });
 
-      if (horseData && horseData.values.length === 1 && horses[i].races.length) {
+      if (
+        horseData &&
+        horseData.values.length === 1 &&
+        horses[i].races.length
+      ) {
         const valuesIds = [];
         for (let j = 0; j < horses[i].races.length; j++) {
           const horseRaceData = new HorseRace({
@@ -32,7 +36,7 @@ exports.createOldPrevValues = async (req, res, next) => {
     }
     res.json({ message: "Valores previos de caballos creados exitosamente" });
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     next(error);
   }
 };
@@ -47,16 +51,16 @@ exports.getDrivesCorrections = async (req, res, next) => {
           year: new Date().getFullYear() - parseInt(horses[i].age),
           table: "FRA",
         });
-  
+
         if (horseData) {
           const day = horses[i].date.substring(0, 2);
           const month = horses[i].date.substring(2, 4);
           const year = horses[i].date.substring(4, 8);
           const date = new Date(year, month - 1, day);
-  
+
           const startOfDay = new Date(date.setHours(0, 0, 0, 0));
           const endOfDay = new Date(date.setHours(23, 59, 59, 999));
-  
+
           const raceData = await HorseRace.findOne({
             horse: horseData._id,
             date: {
@@ -65,20 +69,19 @@ exports.getDrivesCorrections = async (req, res, next) => {
             },
           });
 
-          raceData.value = horses[i].value
-          raceData.mud = horses[i].mud
-  
-          await raceData.save()
+          raceData.value = horses[i].value;
+          raceData.mud = horses[i].mud;
+
+          await raceData.save();
         }
       }
     }
-    res.json('Correcciones guardadas')
+    res.json("Correcciones guardadas");
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     next(error);
   }
-
-}
+};
 
 exports.getDrivesRests = async (req, res, next) => {
   const horses = req.body;
@@ -90,16 +93,16 @@ exports.getDrivesRests = async (req, res, next) => {
           year: new Date().getFullYear() - parseInt(horses[i].age),
           table: "FRA",
         });
-  
+
         if (horseData) {
           const day = horses[i].date.substring(0, 2);
           const month = horses[i].date.substring(2, 4);
           const year = horses[i].date.substring(4, 8);
           const date = new Date(year, month - 1, day);
-  
+
           const startOfDay = new Date(date.setHours(0, 0, 0, 0));
           const endOfDay = new Date(date.setHours(23, 59, 59, 999));
-  
+
           const raceData = await HorseRace.findOne({
             horse: horseData._id,
             date: {
@@ -108,18 +111,18 @@ exports.getDrivesRests = async (req, res, next) => {
             },
           });
 
-          raceData.driveRest = horses[i].rest
-  
-          await raceData.save()
+          raceData.driveRest = horses[i].rest;
+
+          await raceData.save();
         }
       }
     }
-    res.json('Restas guardadas')
+    res.json("Restas guardadas");
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     next(error);
   }
-}
+};
 
 exports.createHorse = async (req, res, next) => {
   const horseData = new Horse({
@@ -394,6 +397,68 @@ exports.actualizar = async (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({ error: "Ha habido un error actualizando" });
+  }
+};
+
+exports.editValue = async (req, res) => {
+  const value = req.body.value;
+  const valueID = req.params.id;
+
+  try {
+    const valueData = await HorseRace.findById(valueID);
+    valueData.value = value;
+    await valueData.save();
+
+    res.json(valueData);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+exports.createHorseRace = async (req, res) => {
+  const horseId = req.params.id;
+  const race = req.body;
+
+  try {
+    const horseData = await Horse.findById(horseId);
+    const raceData = new HorseRace({
+      horse: horseData._id,
+      ...(race.complements && { complements: race.complements }),
+      ...(race.box && { box: parseInt(race.box) }),
+      ...(race.jockey && { jockey: race.jockey.toUpperCase() }),
+      ...(race.unload && { unload: parseInt(race.unload) }),
+      ...(race.weight && { weight: parseInt(race.weight) }),
+      ...(race.trainer && { trainer: race.trainer.toUpperCase() }),
+      ...(race.racecourse && { racecourse: race.racecourse.toUpperCase() }),
+      ...(race.corde && {
+        corde: race.corde.includes("derecha")
+          ? "CORDE_DROITE"
+          : race.corde.includes("izquierda")
+          ? "CORDE_GAUCHE"
+          : "LIGNE DROITE",
+      }),
+      ...(race.distance && { distance: parseInt(race.distance) }),
+      ...(race.raceType && { raceType: race.raceType.toUpperCase() }),
+      ...(race.notes && { notes: race.notes }),
+      ...(race.position && { position: race.position }),
+      ...(race.measurement && { measurement: race.measurement }),
+      mud: race.mud,
+      surface: race.surface,
+      date: race.date,
+      value: race.value,
+    });
+
+    await raceData.save();
+
+    const allRaces = await HorseRace.find({ horse: horseData._id });
+    allRaces.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sortedRaceIds = allRaces.map((race) => race._id);
+    horseData.values = sortedRaceIds;
+
+    await horseData.save();
+    res.json(raceData);
+  } catch (error) {
+    res.status(400).json(error);
   }
 };
 
