@@ -254,7 +254,12 @@ exports.getRacesByDate = async (req, res) => {
             $filter: {
               input: "$horses.values",
               as: "value",
-              cond: { $ne: ["$$value.date", "$date"] },
+              cond: {
+                $and: [
+                  { $ne: ["$$value.date", "$date"] }, // Mantiene la condición existente: excluir la carrera actual.
+                  { $lte: ["$$value.date", endDate] }, // Agrega nueva condición: excluir carreras después de la fecha dada.
+                ],
+              },
             },
           },
         },
