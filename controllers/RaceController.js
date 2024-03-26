@@ -226,6 +226,14 @@ exports.getRacesByDate = async (req, res) => {
       { $unwind: "$horses" },
       {
         $lookup: {
+          from: "races",
+          localField: "horses.races",
+          foreignField: "_id",
+          as: "horses.races",
+        },
+      },
+      {
+        $lookup: {
           from: "horseraces",
           localField: "horses.values",
           foreignField: "_id",
@@ -246,18 +254,26 @@ exports.getRacesByDate = async (req, res) => {
               0,
             ],
           },
-        },
-      },
-      {
-        $set: {
+          "horses.races": {
+            $filter: {
+              input: "$horses.races",
+              as: "race",
+              cond: {
+                $and: [
+                  { $ne: ["$$race.date", "$date"] },
+                  { $lte: ["$$race.date", endDate] },
+                ],
+              },
+            },
+          },
           "horses.values": {
             $filter: {
               input: "$horses.values",
               as: "value",
               cond: {
                 $and: [
-                  { $ne: ["$$value.date", "$date"] }, // Mantiene la condición existente: excluir la carrera actual.
-                  { $lte: ["$$value.date", endDate] }, // Agrega nueva condición: excluir carreras después de la fecha dada.
+                  { $ne: ["$$value.date", "$date"] },
+                  { $lte: ["$$value.date", endDate] },
                 ],
               },
             },
