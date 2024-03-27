@@ -38,7 +38,7 @@ const horseRaceSchema = new Schema(
       type: String,
     },
     position: {
-      type: String,
+      type: Number,
     },
     racecourseCode: {
       type: String,
@@ -50,7 +50,7 @@ const horseRaceSchema = new Schema(
       type: Boolean,
     },
     corde: {
-      type: String
+      type: String,
     },
     race: {
       type: Number,
@@ -67,6 +67,12 @@ const horseRaceSchema = new Schema(
     measurement: {
       type: String,
     },
+    measurementValue: {
+      type: String,
+    },
+    distanceHorsePrecedent: {
+      type: String,
+    },
     mud: {
       type: Boolean,
     },
@@ -77,8 +83,8 @@ const horseRaceSchema = new Schema(
       type: Boolean,
     },
     driveRest: {
-      type: String
-    }
+      type: String,
+    },
   },
   {
     timestamps: true,

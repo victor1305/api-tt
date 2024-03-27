@@ -22,7 +22,13 @@ const raceSchema = new Schema(
       type: String,
     },
     corde: {
-      type: String
+      type: String,
+    },
+    duration: {
+      type: Number,
+    },
+    result: {
+      type: Array,
     },
     distance: {
       type: Number,
@@ -31,6 +37,9 @@ const raceSchema = new Schema(
       type: String,
     },
     measurement: {
+      type: String,
+    },
+    measurementValue: {
       type: String,
     },
     time: {

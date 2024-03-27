@@ -13,6 +13,18 @@ const horseSchema = new Schema(
     table: {
       type: String
     },
+    mother: {
+      type: String
+    },
+    father: {
+      type: String
+    },
+    grandFather: {
+      type: String
+    },
+    genre: {
+      type: String
+    },
     values: [
       {
         type: mongoose.ObjectId,

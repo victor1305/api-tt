@@ -322,11 +322,18 @@ exports.getRacesByDate = async (req, res) => {
 };
 
 exports.checkExistingRace = async (racecourseCode, number, date) => {
+  const dateFormatted = new Date(date);
+
+  const startOfDay = new Date(dateFormatted.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(dateFormatted.setHours(23, 59, 59, 999));
   try {
     const existingRace = await Race.findOne({
       racecourseCode: racecourseCode,
       number: number,
-      date: date,
+      date: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
     });
     return existingRace;
   } catch (error) {
@@ -480,6 +487,137 @@ exports.createHorseRace = async (req, res) => {
     res.json(raceData);
   } catch (error) {
     res.status(400).json(error);
+  }
+};
+
+exports.addResultsByDate = async (req, res) => {
+  const date = req.body.date;
+  const races = await fetch(
+    `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}?meteo=true&specialisation=OFFLINE`
+  );
+
+  const racesParsed = await races.json();
+
+  if (!racesParsed.programme) {
+    return res.status(400).json({ error: "Esta fecha no está disponible" });
+  }
+  const reunions = racesParsed?.programme?.reunions;
+  const listReunions = [];
+
+  for (let i = 0; i < reunions.length; i++) {
+    if (
+      reunions[i].pays.code === "FRA" &&
+      reunions[i].audience === "NATIONAL" &&
+      reunions[i].disciplinesMere.includes("PLAT")
+    ) {
+      for (let j = 0; j < reunions[i].courses.length; j++) {
+        if (reunions[i].courses[j].discipline === "PLAT") {
+          listReunions.push(
+            `R${reunions[i].numOfficiel}/C${reunions[i].courses[j].numOrdre}`
+          );
+        }
+      }
+    }
+  }
+
+  if (listReunions.length > 0) {
+    try {
+      for (let i = 0; i < listReunions.length; i++) {
+        const raceUrl = `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}/${listReunions[i]}/participants?specialisation=OFFLINE`;
+        const raceResponse = await fetch(raceUrl);
+        const raceResponseParsed = await raceResponse.json();
+        const participants = raceResponseParsed.participants;
+        const reunionInfo = reunions.find(
+          (obj) => obj.numOfficiel === parseInt(listReunions[i].charAt(1))
+        );
+        const raceInfo = reunionInfo.courses.find(
+          (obj) =>
+            obj.numOrdre ===
+            parseInt(
+              listReunions[i].length === 5
+                ? listReunions[i].slice(-1)
+                : listReunions[i].slice(-2)
+            )
+        );
+        const time = new Date(raceInfo.heureDepart);
+        const hour = time.getHours();
+        const minutes = time.getMinutes();
+        const day = parseInt(date.substring(0, 2));
+        const month = parseInt(date.substring(2, 4)) - 1;
+        const year = parseInt(date.substring(4, 8));
+
+        const isoDate = new Date(year, month, day, hour, minutes).toISOString();
+
+        const existingRace = await exports.checkExistingRace(
+          raceInfo.hippodrome.codeHippodrome,
+          raceInfo.numOrdre,
+          isoDate
+        );
+
+        if (existingRace && raceInfo.arriveeDefinitive) {
+          existingRace.duration = raceInfo.dureeCourse;
+          existingRace.result = raceInfo.ordreArrivee;
+          existingRace.measurement = raceInfo.penetrometre?.intitule || "";
+          existingRace.measurementValue =
+            raceInfo.penetrometre?.valeurMesure || "";
+
+          for (let j = 0; j < participants.length; j++) {
+            const horseData = await Horse.findOne({
+              name: participants[j].nom.toUpperCase(),
+              year: new Date().getFullYear() - participants[j].age,
+              table: "FRA",
+            });
+
+            if (
+              horseData &&
+              (!horseData.mother ||
+                !horseData.father ||
+                !horseData.genre ||
+                !horseData.grandFather)
+            ) {
+              horseData.mother = participants[j].nomMere || "";
+              horseData.father = participants[j].nomPere || "";
+              horseData.grandFather = participants[j].nomPereMere || "";
+              horseData.genre = participants[j].sexe || "";
+              await horseData.save();
+            }
+
+            if (horseData) {
+              const dateFormatted = new Date(isoDate);
+              const startOfDay = new Date(dateFormatted.setHours(0, 0, 0, 0));
+              const endOfDay = new Date(
+                dateFormatted.setHours(23, 59, 59, 999)
+              );
+              const horseRaceData = await HorseRace.findOne({
+                horse: horseData._id,
+                date: {
+                  $gte: startOfDay,
+                  $lt: endOfDay,
+                },
+              });
+
+              if (horseRaceData) {
+                horseRaceData.position = participants[j].ordreArrivee;
+                horseRaceData.distanceHorsePrecedent =
+                  participants[j].distanceChevalPrecedent?.libelleCourt || "";
+                horseRaceData.measurement =
+                  raceInfo.penetrometre?.intitule || "";
+                horseRaceData.measurementValue =
+                  raceInfo.penetrometre?.valeurMesure || "";
+                await horseRaceData.save();
+              }
+            }
+          }
+        }
+      }
+      res.json({
+        msg: "Jornada actualizada correctamente",
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: "Ha habido un error actualizando el día" });
+    }
   }
 };
 
