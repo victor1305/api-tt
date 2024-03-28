@@ -453,11 +453,13 @@ exports.createHorseRace = async (req, res) => {
       horse: horseData._id,
       ...(race.complements && { complements: race.complements }),
       ...(race.box && { box: parseInt(race.box) }),
-      ...(race.jockey && { jockey: race.jockey.toUpperCase() }),
+      ...(race.jockey && { jockey: race.jockey.toUpperCase().trim() }),
       ...(race.unload && { unload: parseInt(race.unload) }),
       ...(race.weight && { weight: parseInt(race.weight) }),
-      ...(race.trainer && { trainer: race.trainer.toUpperCase() }),
-      ...(race.racecourse && { racecourse: race.racecourse.toUpperCase() }),
+      ...(race.trainer && { trainer: race.trainer.toUpperCase().trim() }),
+      ...(race.racecourse && {
+        racecourse: race.racecourse.toUpperCase().trim(),
+      }),
       ...(race.corde && {
         corde: race.corde.includes("derecha")
           ? "CORDE_DROITE"
@@ -473,7 +475,7 @@ exports.createHorseRace = async (req, res) => {
       mud: race.mud,
       surface: race.surface,
       date: race.date,
-      value: race.value,
+      value: race.value.trim(),
     });
 
     await raceData.save();
@@ -610,9 +612,125 @@ exports.addResultsByDate = async (req, res) => {
           }
         }
       }
-      res.json({
-        msg: "Jornada actualizada correctamente",
-      });
+      const dateFormatted = new Date(
+        dateStr.substring(4, 8),
+        dateStr.substring(2, 4) - 1,
+        dateStr.substring(0, 2)
+      );
+      const startDate = new Date(dateFormatted);
+      const endDate = new Date(dateFormatted);
+      endDate.setDate(endDate.getDate() + 1);
+
+      const result = await Race.aggregate([
+        {
+          $match: {
+            date: {
+              $gte: startDate,
+              $lt: endDate,
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "horses",
+            localField: "horses",
+            foreignField: "_id",
+            as: "horses",
+          },
+        },
+        { $unwind: "$horses" },
+        {
+          $lookup: {
+            from: "races",
+            localField: "horses.races",
+            foreignField: "_id",
+            as: "horses.races",
+          },
+        },
+        {
+          $lookup: {
+            from: "horseraces",
+            localField: "horses.values",
+            foreignField: "_id",
+            as: "horses.values",
+          },
+        },
+        {
+          $set: {
+            "horses.thisRaceData": {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$horses.values",
+                    as: "value",
+                    cond: { $eq: ["$$value.date", "$date"] },
+                  },
+                },
+                0,
+              ],
+            },
+            "horses.races": {
+              $filter: {
+                input: "$horses.races",
+                as: "race",
+                cond: {
+                  $and: [
+                    { $ne: ["$$race.date", "$date"] },
+                    { $lte: ["$$race.date", endDate] },
+                  ],
+                },
+              },
+            },
+            "horses.values": {
+              $filter: {
+                input: "$horses.values",
+                as: "value",
+                cond: {
+                  $and: [
+                    { $ne: ["$$value.date", "$date"] },
+                    { $lte: ["$$value.date", endDate] },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            root: { $first: "$$ROOT" },
+            horses: { $push: "$horses" },
+          },
+        },
+        {
+          $set: {
+            "root.horses": "$horses",
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$root" },
+        },
+        {
+          $group: {
+            _id: "$racecourseCode",
+            races: { $push: "$$ROOT" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            racecourseCode: "$_id",
+            races: 1,
+          },
+        },
+      ]);
+
+      const formattedResult = result.reduce((acc, current) => {
+        acc[current.racecourseCode] = current.races;
+        return acc;
+      }, {});
+
+      res.json(formattedResult);
     } catch (error) {
       return res
         .status(400)
@@ -742,6 +860,21 @@ exports.createRacesByDate = async (req, res) => {
                   ...(participants[j].indicateurInedit && { debut: true }),
                 });
 
+                if (
+                  !horseData.mother ||
+                  !horseData.father ||
+                  !horseData.genre ||
+                  !horseData.grandFather
+                ) {
+                  horseData.mother =
+                    participants[j].nomMere.toUpperCase() || "";
+                  horseData.father =
+                    participants[j].nomPere.toUpperCase() || "";
+                  horseData.grandFather =
+                    participants[j].nomPereMere.toUpperCase() || "";
+                  horseData.genre = participants[j].sexe.toUpperCase() || "";
+                }
+
                 const horseRaceDataSaved = await horseRaceData.save();
                 horseData.values = horseData.values.concat(
                   horseRaceDataSaved._id
@@ -754,6 +887,10 @@ exports.createRacesByDate = async (req, res) => {
                   name: participants[j].nom.toUpperCase(),
                   year: new Date().getFullYear() - participants[j].age,
                   table: "FRA",
+                  mother: participants[j].nomMere.toUpperCase() || "",
+                  father: participants[j].nomPere.toUpperCase() || "",
+                  grandFather: participants[j].nomPereMere.toUpperCase() || "",
+                  genre: participants[j].sexe || "",
                 });
 
                 const newHorseSaved = await newHorse.save();
