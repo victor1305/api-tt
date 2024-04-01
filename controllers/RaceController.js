@@ -613,9 +613,9 @@ exports.addResultsByDate = async (req, res) => {
         }
       }
       const dateFormatted = new Date(
-        dateStr.substring(4, 8),
-        dateStr.substring(2, 4) - 1,
-        dateStr.substring(0, 2)
+        date.substring(4, 8),
+        date.substring(2, 4) - 1,
+        date.substring(0, 2)
       );
       const startDate = new Date(dateFormatted);
       const endDate = new Date(dateFormatted);
