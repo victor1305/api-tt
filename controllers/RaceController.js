@@ -99,6 +99,30 @@ exports.updateDayControl = async (req, res) => {
   }
 };
 
+exports.getDayControl = async (req, res) => {
+  const { year, month } = req.params;
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
+  try {
+    const result = await QuadrantDay.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: startDate,
+            $lt: endDate,
+          },
+        },
+      }
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.getDrivesRests = async (req, res, next) => {
   const horses = req.body;
   try {
