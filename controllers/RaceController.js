@@ -837,6 +837,10 @@ exports.createRacesByDate = async (req, res) => {
 
   if (listReunions.length > 0) {
     try {
+      const day = parseInt(date.substring(0, 2));
+      const month = parseInt(date.substring(2, 4)) - 1;
+      const year = parseInt(date.substring(4, 8));
+      
       for (let i = 0; i < listReunions.length; i++) {
         const raceUrl = `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}/${listReunions[i]}/participants?specialisation=OFFLINE`;
         const raceResponse = await fetch(raceUrl);
@@ -863,9 +867,6 @@ exports.createRacesByDate = async (req, res) => {
         }`;
 
         if (raceInfo.parcours.includes("FIBRE")) racingTrack = "PSF";
-        const day = parseInt(date.substring(0, 2));
-        const month = parseInt(date.substring(2, 4)) - 1;
-        const year = parseInt(date.substring(4, 8));
 
         const isoDate = new Date(year, month, day, hour, minutes).toISOString();
         const partantsFormatted = [];
@@ -1004,7 +1005,7 @@ exports.createRacesByDate = async (req, res) => {
         }
       }
       const quadrantDayData = new QuadrantDay({
-        date: isoDate,
+        date: new Date(year, month, day).toISOString(),
         day: parseInt(day),
         notes: false,
         saved: false,
