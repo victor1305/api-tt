@@ -12,6 +12,7 @@ router.post('/crear-carrera-caballo/:id', verifyToken, RaceController.createHors
 router.post('/actualizar-resultados-carrera', RaceController.addResultsByDate)
 router.post('/actualizar', RaceController.actualizar)
 router.put('/editar-valor/:id/edit', verifyToken, RaceController.editValue)
+router.put('/editar-dia/:id/edit', verifyToken, RaceController.updateDayControl)
 router.get('/cargar-cuadrantes-por-dia/:date', RaceController.getRacesByDate)
 router.get('/cargar-carreras-por-mes/:year/:month', RaceController.getRacesNumberByMonth)
 

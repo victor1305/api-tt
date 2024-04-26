@@ -1,6 +1,7 @@
 const HorseRace = require("../models/HorseRace.model");
 const Horse = require("../models/Horse.model");
 const Race = require("../models/Race.model");
+const QuadrantDay = require("../models/QuadrantDay.model");
 
 exports.createOldPrevValues = async (req, res, next) => {
   const horses = req.body;
@@ -80,6 +81,21 @@ exports.getDrivesCorrections = async (req, res, next) => {
   } catch (error) {
     console.error(error);
     next(error);
+  }
+};
+
+exports.updateDayControl = async (req, res) => {
+  const data = req.body;
+  const dateId = req.params.id;
+  try {
+    const dayData = await QuadrantDay.findById(dateId);
+    dayData[data.parameter] = !dayData[data.parameter];
+    await dayData.save();
+    res.json({
+      data: dayData,
+    });
+  } catch (error) {
+    res.status(400).json(error);
   }
 };
 
@@ -936,6 +952,14 @@ exports.createRacesByDate = async (req, res) => {
             raceData.horses = partantsFormatted;
             await raceData.save();
           }
+          const quadrantDayData = new QuadrantDay({
+            date: isoDate,
+            day: parseInt(day),
+            notes: false,
+            saved: false,
+            corrections: false,
+          });
+          await quadrantDayData.save();
         }
       }
       res.json({
