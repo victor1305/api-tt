@@ -99,10 +99,10 @@ exports.updateDayControl = async (req, res) => {
   }
 };
 
-exports.getDayControl = async (req, res) => {
+exports.getDayControlByMonth = async (req, res) => {
   const { year, month } = req.params;
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 1);
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 1);
 
   try {
     const result = await QuadrantDay.aggregate([
@@ -113,7 +113,32 @@ exports.getDayControl = async (req, res) => {
             $lt: endDate,
           },
         },
-      }
+      },
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getDayControlByDay = async (req, res) => {
+  const date = req.params.date;
+  const startDate = new Date(date);
+  const endDate = new Date(date);
+  endDate.setDate(endDate.getDate() + 1);
+
+  try {
+    const result = await QuadrantDay.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: startDate,
+            $lt: endDate,
+          },
+        },
+      },
     ]);
 
     res.json(result);
@@ -976,16 +1001,16 @@ exports.createRacesByDate = async (req, res) => {
             raceData.horses = partantsFormatted;
             await raceData.save();
           }
-          const quadrantDayData = new QuadrantDay({
-            date: isoDate,
-            day: parseInt(day),
-            notes: false,
-            saved: false,
-            corrections: false,
-          });
-          await quadrantDayData.save();
         }
       }
+      const quadrantDayData = new QuadrantDay({
+        date: isoDate,
+        day: parseInt(day),
+        notes: false,
+        saved: false,
+        corrections: false,
+      });
+      await quadrantDayData.save();
       res.json({
         msg: "Jornada creada correctamente",
       });

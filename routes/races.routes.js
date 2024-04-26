@@ -15,6 +15,7 @@ router.put('/editar-valor/:id/edit', verifyToken, RaceController.editValue)
 router.put('/editar-dia/:id/edit', verifyToken, RaceController.updateDayControl)
 router.get('/cargar-cuadrantes-por-dia/:date', RaceController.getRacesByDate)
 router.get('/cargar-carreras-por-mes/:year/:month', RaceController.getRacesNumberByMonth)
-router.get('/cargar-estados-por-mes/:year/:month', RaceController.getDayControl)
+router.get('/cargar-estados-por-mes/:year/:month', RaceController.getDayControlByMonth)
+router.get('/cargar-estados-por-dia/:date', RaceController.getDayControlByDay)
 
 module.exports = router
