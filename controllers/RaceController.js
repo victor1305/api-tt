@@ -101,8 +101,8 @@ exports.updateDayControl = async (req, res) => {
 
 exports.getDayControlByMonth = async (req, res) => {
   const { year, month } = req.params;
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 1);
+  const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const endDate = new Date(parseInt(year), parseInt(month), 1);
 
   try {
     const result = await QuadrantDay.aggregate([
@@ -177,6 +177,7 @@ exports.getDrivesRests = async (req, res, next) => {
           });
 
           raceData.driveRest = horses[i].rest;
+          raceData.isBoldDrive = horses[i].isBold;
 
           await raceData.save();
         }

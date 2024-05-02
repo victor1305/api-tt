@@ -85,6 +85,9 @@ const horseRaceSchema = new Schema(
     driveRest: {
       type: String,
     },
+    isBoldDrive: {
+      type: Boolean
+    }
   },
   {
     timestamps: true,
