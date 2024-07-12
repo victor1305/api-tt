@@ -148,6 +148,35 @@ exports.getDayControlByDay = async (req, res) => {
   }
 };
 
+exports.getDriveValues = async (req, res, next) => {
+  const horses = req.body;
+  const horsesValues = [];
+  try {
+    for (let i = 0; i < horses.length; i++) {
+      const horseData = await Horse.findOne({
+        name: horses[i].horseName.toUpperCase(),
+        year: new Date().getFullYear() - parseInt(horses[i].age),
+        table: "FRA",
+      }).populate({
+        path: 'values',
+        options: { sort: { _id: -1 }, limit: 10 }
+      });;
+
+      if (horseData) {
+        horsesValues.push({
+          row: horses[i].row,
+          name: horses[i].horseName,
+          values: horseData.values
+        })
+      }
+    }
+    res.json(horsesValues);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+}
+
 exports.getDrivesRests = async (req, res, next) => {
   const horses = req.body;
   try {
