@@ -159,7 +159,7 @@ exports.getDriveValues = async (req, res, next) => {
         table: "FRA",
       }).populate({
         path: 'values',
-        options: { sort: { _id: -1 }, limit: 10 }
+        options: { sort: { date: 1 }, limit: 10 }
       });;
 
       if (horseData) {
