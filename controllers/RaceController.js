@@ -1,7 +1,21 @@
 const HorseRace = require("../models/HorseRace.model");
 const Horse = require("../models/Horse.model");
 const Race = require("../models/Race.model");
+const nodemailer = require("nodemailer");
 const QuadrantDay = require("../models/QuadrantDay.model");
+const {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+  BorderStyle,
+  ShadingType,
+} = require("docx");
+const fs = require("fs");
 
 exports.createOldPrevValues = async (req, res, next) => {
   const horses = req.body;
@@ -123,6 +137,90 @@ exports.getDayControlByMonth = async (req, res) => {
   }
 };
 
+exports.createTablesDocx = async (req, res) => {
+  try {
+    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2022sorted = horses2022.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2021sorted = horses2021.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    const doc2022 = createDocument(
+      horses2022sorted,
+      `Caballos ${new Date().getFullYear() - 2022} años`
+    );
+    const doc2021 = createDocument(
+      horses2021sorted,
+      `Caballos ${new Date().getFullYear() - 2021} años`
+    );
+
+    Promise.all([
+      saveDocument(
+        doc2022,
+        `Caballos ${new Date().getFullYear() - 2022} años.docx`
+      ),
+      saveDocument(
+        doc2021,
+        `Caballos ${new Date().getFullYear() - 2021} años.docx`
+      ),
+    ]).then(() => {
+      // Configurar el transportador de nodemailer
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: "tipsterofturf@gmail.com",
+          pass: process.env.MAIL_PASS,
+        },
+      });
+
+      // Opciones del correo electrónico
+      const mailOptions = {
+        from: "tipsterofturf@gmail.com",
+        to: "victor1305@hotmail.com",
+        subject: "Tablas",
+        text: "Tablas actualizadas.",
+        attachments: [
+          {
+            filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
+            path: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
+          },
+          {
+            filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
+            path: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
+          },
+        ],
+      };
+
+      // Enviar el correo electrónico
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return console.log(error);
+        }
+        console.log("Correo enviado: " + info.response);
+
+        // Borrar los archivos después de enviar el correo electrónico
+        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2022} años.docx`);
+        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2021} años.docx`);
+        console.log("Archivos borrados después de enviar el correo.");
+      });
+    });
+    res.status(200).json("Email enviado correctamente");
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.getDayControlByDay = async (req, res) => {
   const date = req.params.date;
   const startDate = new Date(date);
@@ -158,16 +256,16 @@ exports.getDriveValues = async (req, res, next) => {
         year: new Date().getFullYear() - parseInt(horses[i].age),
         table: "FRA",
       }).populate({
-        path: 'values',
-        options: { sort: { date: -1 }, limit: 10 }
+        path: "values",
+        options: { sort: { date: -1 }, limit: 10 },
       });
 
       if (horseData) {
         horsesValues.push({
           row: horses[i].row,
           name: horses[i].horseName,
-          values: horseData.values
-        })
+          values: horseData.values,
+        });
       }
     }
     res.json(horsesValues);
@@ -175,7 +273,7 @@ exports.getDriveValues = async (req, res, next) => {
     console.error(error);
     next(error);
   }
-}
+};
 
 exports.getDrivesRests = async (req, res, next) => {
   const horses = req.body;
@@ -870,7 +968,7 @@ exports.createRacesByDate = async (req, res) => {
       const day = parseInt(date.substring(0, 2));
       const month = parseInt(date.substring(2, 4)) - 1;
       const year = parseInt(date.substring(4, 8));
-      
+
       for (let i = 0; i < listReunions.length; i++) {
         const raceUrl = `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}/${listReunions[i]}/participants?specialisation=OFFLINE`;
         const raceResponse = await fetch(raceUrl);
@@ -1055,4 +1153,123 @@ exports.createRacesByDate = async (req, res) => {
       .status(400)
       .json({ error: "No hay carreras de tablas en esta fecha" });
   }
+};
+
+const createDocument = (data, title) => {
+  const table = new Table({
+    columnWidths: [2500, 6500],
+    rows: data.map((item) => {
+      const concatenatedValues = item.values.flatMap((val, index) => {
+        const textRunOptions = {
+          text: val.value,
+          font: "Arial",
+          size: 24, // 12 puntos (pt) = 24 half-points
+          bold: val.surface === "PSF",
+        };
+
+        if (val.mud) {
+          textRunOptions.shading = {
+            type: ShadingType.CLEAR,
+            fill: "FFFF00", // Color amarillo
+          };
+        }
+
+        const textRuns = [new TextRun(textRunOptions)];
+
+        if (index < item.values.length - 1) {
+          textRuns.push(
+            new TextRun({
+              text: "-",
+              font: "Arial",
+              size: 24, // 12 puntos (pt) = 24 half-points
+            })
+          );
+        }
+
+        return textRuns;
+      });
+
+      return new TableRow({
+        children: [
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: item.name,
+                    font: "Arial",
+                    size: 24, // 12 puntos (pt) = 24 half-points
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+            ],
+            width: { size: 2500, type: WidthType.DXA }, // 5 cm
+            borders: {
+              top: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              bottom: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              left: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              right: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+            },
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: concatenatedValues,
+                spacing: { after: 100 }, // Espacio después del párrafo
+              }),
+            ],
+            width: { size: 6500, type: WidthType.DXA }, // 13 cm
+            borders: {
+              top: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              bottom: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              left: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+              right: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+            },
+          }),
+        ],
+      });
+    }),
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+      bottom: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+      left: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+      right: { style: BorderStyle.SINGLE, size: 1, color: "FFFFFF" },
+    },
+  });
+
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: title,
+                font: "Arial",
+                size: 28, // Título un poco más grande
+                bold: true, // Título en negrita
+              }),
+            ],
+            alignment: "center", // Centrar el título
+          }),
+          new Paragraph({
+            // Párrafo vacío para añadir un espacio entre el título y la tabla
+            text: "",
+            spacing: { after: 200 }, // Espacio después del título
+          }),
+          table,
+        ],
+      },
+    ],
+  });
+
+  return doc;
+};
+
+const saveDocument = (doc, filePath) => {
+  return Packer.toBuffer(doc).then((buffer) => {
+    fs.writeFileSync(filePath, buffer);
+    console.log(`El archivo ${filePath} ha sido creado exitosamente.`);
+  });
 };
