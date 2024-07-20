@@ -138,6 +138,7 @@ exports.getDayControlByMonth = async (req, res) => {
 };
 
 exports.createTablesDocx = async (req, res) => {
+  const date = req.body
   try {
     const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
       "values"
@@ -151,6 +152,24 @@ exports.createTablesDocx = async (req, res) => {
     const horses2021sorted = horses2021.sort((a, b) =>
       a.name.localeCompare(b.name)
     );
+    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2020sorted = horses2020.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2019sorted = horses2019.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2018sorted = horses2018.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
 
     const doc2022 = createDocument(
       horses2022sorted,
@@ -159,6 +178,18 @@ exports.createTablesDocx = async (req, res) => {
     const doc2021 = createDocument(
       horses2021sorted,
       `Caballos ${new Date().getFullYear() - 2021} años`
+    );
+    const doc2020 = createDocument(
+      horses2020sorted,
+      `Caballos ${new Date().getFullYear() - 2020} años`
+    );
+    const doc2019 = createDocument(
+      horses2019sorted,
+      `Caballos ${new Date().getFullYear() - 2019} años`
+    );
+    const doc2018 = createDocument(
+      horses2018sorted,
+      `Caballos ${new Date().getFullYear() - 2018} años`
     );
 
     Promise.all([
@@ -169,6 +200,18 @@ exports.createTablesDocx = async (req, res) => {
       saveDocument(
         doc2021,
         `Caballos ${new Date().getFullYear() - 2021} años.docx`
+      ),
+      saveDocument(
+        doc2020,
+        `Caballos ${new Date().getFullYear() - 2020} años.docx`
+      ),
+      saveDocument(
+        doc2019,
+        `Caballos ${new Date().getFullYear() - 2019} años.docx`
+      ),
+      saveDocument(
+        doc2018,
+        `Caballos ${new Date().getFullYear() - 2018} años.docx`
       ),
     ]).then(() => {
       // Configurar el transportador de nodemailer
@@ -187,7 +230,7 @@ exports.createTablesDocx = async (req, res) => {
       const mailOptions = {
         from: "tipsterofturf@gmail.com",
         to: "victor1305@hotmail.com",
-        subject: "Tablas",
+        subject: `Tablas actualizadas a ${date}`,
         text: "Tablas actualizadas.",
         attachments: [
           {
@@ -198,6 +241,18 @@ exports.createTablesDocx = async (req, res) => {
             filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
             path: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
           },
+          {
+            filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
+            path: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
+          },
+          {
+            filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
+            path: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
+          },
+          {
+            filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
+            path: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
+          }
         ],
       };
 
@@ -211,6 +266,9 @@ exports.createTablesDocx = async (req, res) => {
         // Borrar los archivos después de enviar el correo electrónico
         fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2022} años.docx`);
         fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2021} años.docx`);
+        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2020} años.docx`);
+        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2019} años.docx`);
+        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2018} años.docx`);
         console.log("Archivos borrados después de enviar el correo.");
       });
     });
@@ -1267,7 +1325,7 @@ const createDocument = (data, title) => {
   return doc;
 };
 
-const saveDocument = (doc, filePath) => {
+const saveDocument = async (doc, filePath) => {
   return Packer.toBuffer(doc).then((buffer) => {
     fs.writeFileSync(filePath, buffer);
     console.log(`El archivo ${filePath} ha sido creado exitosamente.`);
