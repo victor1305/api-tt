@@ -138,7 +138,9 @@ exports.getDayControlByMonth = async (req, res) => {
 };
 
 exports.createTablesDocx = async (req, res) => {
-  const date = req.body
+  const date = req.body.date;
+  console.log(date);
+  console.log(req.body);
   try {
     const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
       "values"
@@ -252,7 +254,7 @@ exports.createTablesDocx = async (req, res) => {
           {
             filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
             path: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
-          }
+          },
         ],
       };
 
