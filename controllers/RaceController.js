@@ -139,147 +139,83 @@ exports.getDayControlByMonth = async (req, res) => {
 
 exports.createTablesDocx = async (req, res) => {
   const date = req.body.date;
-  console.log(date);
-  console.log(req.body);
   try {
-    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2022sorted = horses2022.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2021sorted = horses2021.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2020sorted = horses2020.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2019sorted = horses2019.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2018sorted = horses2018.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate("values");
+    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate("values");
+    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate("values");
+    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate("values");
+    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate("values");
 
-    const doc2022 = createDocument(
-      horses2022sorted,
-      `Caballos ${new Date().getFullYear() - 2022} años`
-    );
-    const doc2021 = createDocument(
-      horses2021sorted,
-      `Caballos ${new Date().getFullYear() - 2021} años`
-    );
-    const doc2020 = createDocument(
-      horses2020sorted,
-      `Caballos ${new Date().getFullYear() - 2020} años`
-    );
-    const doc2019 = createDocument(
-      horses2019sorted,
-      `Caballos ${new Date().getFullYear() - 2019} años`
-    );
-    const doc2018 = createDocument(
-      horses2018sorted,
-      `Caballos ${new Date().getFullYear() - 2018} años`
-    );
+    const sortedHorses = (horses) => horses.sort((a, b) => a.name.localeCompare(b.name));
 
-    Promise.all([
-      saveDocument(
-        doc2022,
-        `Caballos ${new Date().getFullYear() - 2022} años.docx`
-      ),
-      saveDocument(
-        doc2021,
-        `Caballos ${new Date().getFullYear() - 2021} años.docx`
-      ),
-      saveDocument(
-        doc2020,
-        `Caballos ${new Date().getFullYear() - 2020} años.docx`
-      ),
-      saveDocument(
-        doc2019,
-        `Caballos ${new Date().getFullYear() - 2019} años.docx`
-      ),
-      saveDocument(
-        doc2018,
-        `Caballos ${new Date().getFullYear() - 2018} años.docx`
-      ),
-    ]).then(() => {
-      // Configurar el transportador de nodemailer
-      const transporter = nodemailer.createTransport({
-        service: "Gmail",
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user: "tipsterofturf@gmail.com",
-          pass: process.env.MAIL_PASS,
-        },
-      });
+    const doc2022 = createDocument(sortedHorses(horses2022), `Caballos ${new Date().getFullYear() - 2022} años`);
+    const doc2021 = createDocument(sortedHorses(horses2021), `Caballos ${new Date().getFullYear() - 2021} años`);
+    const doc2020 = createDocument(sortedHorses(horses2020), `Caballos ${new Date().getFullYear() - 2020} años`);
+    const doc2019 = createDocument(sortedHorses(horses2019), `Caballos ${new Date().getFullYear() - 2019} años`);
+    const doc2018 = createDocument(sortedHorses(horses2018), `Caballos ${new Date().getFullYear() - 2018} años`);
 
-      // Opciones del correo electrónico
-      const mailOptions = {
-        from: "tipsterofturf@gmail.com",
-        to: "victor1305@hotmail.com",
-        subject: `Tablas actualizadas a ${date}`,
-        text: "Tablas actualizadas.",
-        attachments: [
-          {
-            filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
-            path: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
-          },
-          {
-            filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
-            path: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
-          },
-          {
-            filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
-            path: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
-          },
-          {
-            filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
-            path: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
-          },
-          {
-            filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
-            path: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
-          },
-        ],
-      };
+    await Promise.all([
+      saveDocument(doc2022, `Caballos ${new Date().getFullYear() - 2022} años.docx`),
+      saveDocument(doc2021, `Caballos ${new Date().getFullYear() - 2021} años.docx`),
+      saveDocument(doc2020, `Caballos ${new Date().getFullYear() - 2020} años.docx`),
+      saveDocument(doc2019, `Caballos ${new Date().getFullYear() - 2019} años.docx`),
+      saveDocument(doc2018, `Caballos ${new Date().getFullYear() - 2018} años.docx`)
+    ]);
 
-      // Enviar el correo electrónico
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          return console.log(error);
-        }
-        console.log("Correo enviado: " + info.response);
-
-        // Borrar los archivos después de enviar el correo electrónico
-        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2022} años.docx`);
-        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2021} años.docx`);
-        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2020} años.docx`);
-        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2019} años.docx`);
-        fs.unlinkSync(`Caballos ${new Date().getFullYear() - 2018} años.docx`);
-        console.log("Archivos borrados después de enviar el correo.");
-      });
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "tipsterofturf@gmail.com",
+        pass: process.env.MAIL_PASS,
+      },
     });
-    res.status(200).json("Email enviado correctamente");
+
+    const mailOptions = {
+      from: "tipsterofturf@gmail.com",
+      to: "partipral@hotmail.com,congeladoseltimon@gmail.com,victor1305@hotmail.com",
+      subject: `Tablas actualizadas a ${date}`,
+      text: "Tablas actualizadas.",
+      attachments: [
+        { filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`, path: `Caballos ${new Date().getFullYear() - 2022} años.docx` },
+        { filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`, path: `Caballos ${new Date().getFullYear() - 2021} años.docx` },
+        { filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`, path: `Caballos ${new Date().getFullYear() - 2020} años.docx` },
+        { filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`, path: `Caballos ${new Date().getFullYear() - 2019} años.docx` },
+        { filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`, path: `Caballos ${new Date().getFullYear() - 2018} años.docx` },
+      ],
+    };
+
+    transporter.sendMail(mailOptions, async (error, info) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Error enviando el correo electrónico" });
+      }
+      console.log("Correo enviado: " + info.response);
+
+      // Borrar los archivos después de enviar el correo electrónico
+      try {
+        await Promise.all([
+          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2022} años.docx`),
+          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2021} años.docx`),
+          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2020} años.docx`),
+          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2019} años.docx`),
+          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2018} años.docx`)
+        ]);
+        console.log("Archivos borrados después de enviar el correo.");
+        res.status(200).json("Email enviado y archivos borrados correctamente");
+      } catch (deleteError) {
+        console.log(deleteError);
+        res.status(500).json({ message: "Error borrando los archivos" });
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 exports.getDayControlByDay = async (req, res) => {
   const date = req.params.date;
