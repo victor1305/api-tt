@@ -1328,8 +1328,15 @@ exports.createRacesByDate = async (req, res) => {
           }
         }
       }
+      const dayFormatted = new Date(year, month, day);
+      const startOfDay = new Date(dayFormatted.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(dayFormatted.setHours(23, 59, 59, 999));
+
       const hasQuadrantDayData = await QuadrantDay.findOne({
-        date: new Date(year, month, day).toISOString(),
+        date: {
+          $gte: startOfDay,
+          $lt: endOfDay,
+        },
       });
       if (!hasQuadrantDayData) {
         const quadrantDayData = new QuadrantDay({
