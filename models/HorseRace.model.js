@@ -87,6 +87,18 @@ const horseRaceSchema = new Schema(
     },
     isBoldDrive: {
       type: Boolean
+    },
+    isPMH: {
+      type: Boolean,
+      default: false
+    },
+    bonnet: {
+      type: Boolean,
+      default: false,
+    },
+    attacheLangue: {
+      type: Boolean,
+      default: false,
     }
   },
   {

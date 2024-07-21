@@ -140,26 +140,67 @@ exports.getDayControlByMonth = async (req, res) => {
 exports.createTablesDocx = async (req, res) => {
   const date = req.body.date;
   try {
-    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate("values");
-    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate("values");
-    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate("values");
-    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate("values");
-    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate("values");
+    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate(
+      "values"
+    );
+    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate(
+      "values"
+    );
 
-    const sortedHorses = (horses) => horses.sort((a, b) => a.name.localeCompare(b.name));
+    const sortedHorses = (horses) =>
+      horses.sort((a, b) => a.name.localeCompare(b.name));
 
-    const doc2022 = createDocument(sortedHorses(horses2022), `Caballos ${new Date().getFullYear() - 2022} años`);
-    const doc2021 = createDocument(sortedHorses(horses2021), `Caballos ${new Date().getFullYear() - 2021} años`);
-    const doc2020 = createDocument(sortedHorses(horses2020), `Caballos ${new Date().getFullYear() - 2020} años`);
-    const doc2019 = createDocument(sortedHorses(horses2019), `Caballos ${new Date().getFullYear() - 2019} años`);
-    const doc2018 = createDocument(sortedHorses(horses2018), `Caballos ${new Date().getFullYear() - 2018} años`);
+    const doc2022 = createDocument(
+      sortedHorses(horses2022),
+      `Caballos ${new Date().getFullYear() - 2022} años`
+    );
+    const doc2021 = createDocument(
+      sortedHorses(horses2021),
+      `Caballos ${new Date().getFullYear() - 2021} años`
+    );
+    const doc2020 = createDocument(
+      sortedHorses(horses2020),
+      `Caballos ${new Date().getFullYear() - 2020} años`
+    );
+    const doc2019 = createDocument(
+      sortedHorses(horses2019),
+      `Caballos ${new Date().getFullYear() - 2019} años`
+    );
+    const doc2018 = createDocument(
+      sortedHorses(horses2018),
+      `Caballos ${new Date().getFullYear() - 2018} años`
+    );
 
     await Promise.all([
-      saveDocument(doc2022, `Caballos ${new Date().getFullYear() - 2022} años.docx`),
-      saveDocument(doc2021, `Caballos ${new Date().getFullYear() - 2021} años.docx`),
-      saveDocument(doc2020, `Caballos ${new Date().getFullYear() - 2020} años.docx`),
-      saveDocument(doc2019, `Caballos ${new Date().getFullYear() - 2019} años.docx`),
-      saveDocument(doc2018, `Caballos ${new Date().getFullYear() - 2018} años.docx`)
+      saveDocument(
+        doc2022,
+        `Caballos ${new Date().getFullYear() - 2022} años.docx`
+      ),
+      saveDocument(
+        doc2021,
+        `Caballos ${new Date().getFullYear() - 2021} años.docx`
+      ),
+      saveDocument(
+        doc2020,
+        `Caballos ${new Date().getFullYear() - 2020} años.docx`
+      ),
+      saveDocument(
+        doc2019,
+        `Caballos ${new Date().getFullYear() - 2019} años.docx`
+      ),
+      saveDocument(
+        doc2018,
+        `Caballos ${new Date().getFullYear() - 2018} años.docx`
+      ),
     ]);
 
     const transporter = nodemailer.createTransport({
@@ -179,29 +220,56 @@ exports.createTablesDocx = async (req, res) => {
       subject: `Tablas actualizadas a ${date}`,
       text: "Tablas actualizadas.",
       attachments: [
-        { filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`, path: `Caballos ${new Date().getFullYear() - 2022} años.docx` },
-        { filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`, path: `Caballos ${new Date().getFullYear() - 2021} años.docx` },
-        { filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`, path: `Caballos ${new Date().getFullYear() - 2020} años.docx` },
-        { filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`, path: `Caballos ${new Date().getFullYear() - 2019} años.docx` },
-        { filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`, path: `Caballos ${new Date().getFullYear() - 2018} años.docx` },
+        {
+          filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
+          path: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
+        },
+        {
+          filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
+          path: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
+        },
+        {
+          filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
+          path: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
+        },
+        {
+          filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
+          path: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
+        },
+        {
+          filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
+          path: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
+        },
       ],
     };
 
     transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.log(error);
-        return res.status(500).json({ message: "Error enviando el correo electrónico" });
+        return res
+          .status(500)
+          .json({ message: "Error enviando el correo electrónico" });
       }
       console.log("Correo enviado: " + info.response);
 
       // Borrar los archivos después de enviar el correo electrónico
       try {
         await Promise.all([
-          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2022} años.docx`),
-          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2021} años.docx`),
-          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2020} años.docx`),
-          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2019} años.docx`),
-          fs.promises.unlink(`Caballos ${new Date().getFullYear() - 2018} años.docx`)
+          fs.promises.unlink(
+            `Caballos ${new Date().getFullYear() - 2022} años.docx`
+          ),
+          fs.promises.unlink(
+            `Caballos ${new Date().getFullYear() - 2021} años.docx`
+          ),
+          fs.promises.unlink(
+            `Caballos ${new Date().getFullYear() - 2020} años.docx`
+          ),
+          fs.promises.unlink(
+            `Caballos ${new Date().getFullYear() - 2019} años.docx`
+          ),
+          fs.promises.unlink(
+            `Caballos ${new Date().getFullYear() - 2018} años.docx`
+          ),
         ]);
         console.log("Archivos borrados después de enviar el correo.");
         res.status(200).json("Email enviado y archivos borrados correctamente");
@@ -215,7 +283,6 @@ exports.createTablesDocx = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 exports.getDayControlByDay = async (req, res) => {
   const date = req.params.date;
@@ -930,10 +997,44 @@ exports.addResultsByDate = async (req, res) => {
 
 exports.createRacesByDate = async (req, res) => {
   const date = req.body.date;
-
   const races = await fetch(
     `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}?meteo=true&specialisation=OFFLINE`
   );
+  const equidiaOptions = {
+    authority: "api.equidia.fr",
+    Accept: "application/json, text/plain, */*",
+    "Content-Type": "application/json",
+    Origin: "https://www.equidia.fr",
+    Priority: "u=1, i",
+    Referer: "https://www.equidia.fr/",
+  };
+  const racesPMH = await fetch(
+    `https://api.equidia.fr/api/public/dailyreunions/${`${date.slice(
+      4
+    )}-${date.slice(2, 4)}-${date.slice(0, 2)}`}`,
+    { method: "GET", headers: equidiaOptions }
+  );
+  const racesPMHParsed = await racesPMH.json();
+  const listPMHReunions = [];
+  for (let i = 0; i < racesPMHParsed.length; i++) {
+    if (
+      racesPMHParsed[i].pays_site_reunion.toUpperCase() === "FRA" &&
+      racesPMHParsed[i].specialite_reunion.toLowerCase() !== "trot"
+    ) {
+      for (let j = 0; j < racesPMHParsed[i].courses_by_day.length; j++) {
+        if (
+          racesPMHParsed[i].courses_by_day[j].discipline.toLowerCase() ===
+            "plat" &&
+          racesPMHParsed[i].courses_by_day[j].is_pmh
+        ) {
+          listPMHReunions.push(
+            `R${racesPMHParsed[i].num_reunion}/C${racesPMHParsed[i].courses_by_day[j].num_course_pmu}`
+          );
+        }
+      }
+    }
+  }
+
   const racesParsed = await races.json();
   if (!racesParsed.programme) {
     return res
@@ -967,9 +1068,18 @@ exports.createRacesByDate = async (req, res) => {
 
       for (let i = 0; i < listReunions.length; i++) {
         const raceUrl = `https://online.turfinfo.api.pmu.fr/rest/client/62/programme/${date}/${listReunions[i]}/participants?specialisation=OFFLINE`;
+        const raceUrlEqui = `https://api.equidia.fr/api/public/v2/courses/${`${date.slice(
+          4
+        )}-${date.slice(2, 4)}-${date.slice(0, 2)}`}/${listReunions[i]}`;
         const raceResponse = await fetch(raceUrl);
+        const raceEquiResponse = await fetch(raceUrlEqui, {
+          method: "GET",
+          headers: equidiaOptions,
+        });
         const raceResponseParsed = await raceResponse.json();
+        const raceResponseEquiParsed = await raceEquiResponse.json();
         const participants = raceResponseParsed.participants;
+        const participantsEqui = raceResponseEquiParsed.partants;
         const reunionInfo = reunions.find(
           (obj) => obj.numOfficiel === parseInt(listReunions[i].charAt(1))
         );
@@ -992,14 +1102,14 @@ exports.createRacesByDate = async (req, res) => {
 
         if (raceInfo.parcours.includes("FIBRE")) racingTrack = "PSF";
 
-        const isoDate = new Date(year, month, day, hour, minutes).toISOString();
+        const isoDate = getSpanishTime(year, month, day, hour, minutes);
         const partantsFormatted = [];
         const existingRace = await exports.checkExistingRace(
           raceInfo.hippodrome.codeHippodrome,
           raceInfo.numOrdre,
-          isoDate
+          isoDate.toISOString()
         );
-        if (!existingRace) {
+        if (existingRace) {
           const raceData = new Race({
             racecourseCode: raceInfo.hippodrome.codeHippodrome,
             racecourse: raceInfo.hippodrome.libelleCourt,
@@ -1046,6 +1156,8 @@ exports.createRacesByDate = async (req, res) => {
                   raceType: raceInfo.categorieParticularite,
                   surface: racingTrack,
                   date: isoDate,
+                  bonnet: participantsEqui[j].bonnet,
+                  attacheLangue: participantsEqui[j].attache_langue,
                   ...(participants[j].supplement > 0 && { supplement: true }),
                   ...(participants[j].indicateurInedit && { debut: true }),
                 });
@@ -1109,9 +1221,12 @@ exports.createRacesByDate = async (req, res) => {
                   raceType: raceInfo.categorieParticularite,
                   surface: racingTrack,
                   date: isoDate,
+                  bonnet: participantsEqui[j].bonnet,
+                  attacheLangue: participantsEqui[j].attache_langue,
                   ...(participants[j].supplement > 0 && { supplement: true }),
                   ...(participants[j].indicateurInedit && { debut: true }),
                 });
+
                 const horseRaceDataSaved = await horseRaceData.save();
                 newHorseSaved.values = newHorseSaved.values.concat(
                   horseRaceDataSaved._id
@@ -1128,18 +1243,109 @@ exports.createRacesByDate = async (req, res) => {
           }
         }
       }
-      const quadrantDayData = new QuadrantDay({
+      for (let i = 0; i < listPMHReunions.length; i++) {
+        const racePMHurl = `https://api.equidia.fr/api/public/v2/courses/${`${date.slice(
+          4
+        )}-${date.slice(2, 4)}-${date.slice(0, 2)}`}/${listPMHReunions[i]}`;
+        const racePMHResponse = await fetch(racePMHurl, {
+          method: "GET",
+          headers: equidiaOptions,
+        });
+        const racePMHResponseParsed = await racePMHResponse.json();
+        let racingTrack = "Hierba";
+        const participants = racePMHResponseParsed.partants;
+        if (racePMHResponseParsed.lib_piste_course.toLowerCase() !== "herbe") {
+          racingTrack = "PSF";
+        }
+
+        for (let j = 0; j < participants.length; j++) {
+          if (
+            !racePMHResponseParsed.conditions_txt_course
+              .toLowerCase()
+              .includes("arabe") ||
+            !racePMHResponseParsed.conditions_txt_course
+              .toLowerCase()
+              .includes("waho")
+          ) {
+            const horseData = await Horse.findOne({
+              name: participants[j].cheval.nom_cheval.toUpperCase(),
+              year:
+                new Date().getFullYear() - participants[j].cheval.age_cheval,
+              table: "FRA",
+            });
+            if (horseData) {
+              const checkRace = await HorseRace.findOne({
+                horse: horseData._id,
+                $expr: {
+                  $and: [
+                    { $eq: [{ $dayOfMonth: "$date" }, day] },
+                    { $eq: [{ $month: "$date" }, month] }, // getMonth() devuelve el mes (0-11), así que sumamos 1
+                    { $eq: [{ $year: "$date" }, year] },
+                  ],
+                },
+              });
+              const time = new Date(racePMHResponseParsed.real_heure_course);
+              const hour = time.getHours();
+              const minutes = time.getMinutes();
+              const isoDate = getSpanishTime(year, month, day, hour, minutes);
+              if (!checkRace) {
+                const horseRaceData = new HorseRace({
+                  number: participants[j].num_partant,
+                  horse: horseData._id,
+                  complements:
+                    participants[j].oeil_partant === "O"
+                      ? "BR"
+                      : participants[j].oeil_partant === "A"
+                      ? "CA"
+                      : "",
+                  box: parseInt(participants[j].place_corde_partant),
+                  jockey: participants[j].monte.nom_monte,
+                  unload: participants[j].pds_cond_monte_partant,
+                  weight: participants[j].pds_calc_hand_partant,
+                  trainer: participants[j].entraineur.nom_entraineur,
+                  racecourseCode: racePMHResponseParsed.reunion.lib_reunion,
+                  racecourse: racePMHResponseParsed.reunion.lib_reunion,
+                  corde: racePMHResponseParsed.lib_corde_course.toUpperCase(),
+                  race: racePMHResponseParsed.num_course_pmu,
+                  distance: racePMHResponseParsed.distance,
+                  raceType: racePMHResponseParsed.categ_course,
+                  surface: racingTrack,
+                  date: isoDate,
+                  isPMH: true,
+                  bonnet: participants[j].bonnet,
+                  attacheLangue: participants[j].attache_langue,
+                  ...(participants[j].type_eng === "S" && { supplement: true }),
+                });
+
+                const horseRaceDataSaved = await horseRaceData.save();
+                horseData.values = horseData.values.concat(
+                  horseRaceDataSaved._id
+                );
+                horseData.races = horseData.races.concat(raceData._id);
+                await horseData.save();
+              }
+            }
+          }
+        }
+      }
+      const hasQuadrantDayData = await QuadrantDay.findOne({
         date: new Date(year, month, day).toISOString(),
-        day: parseInt(day),
-        notes: false,
-        saved: false,
-        corrections: false,
       });
-      await quadrantDayData.save();
+      if (!hasQuadrantDayData) {
+        const quadrantDayData = new QuadrantDay({
+          date: new Date(year, month, day).toISOString(),
+          day: parseInt(day),
+          notes: false,
+          saved: false,
+          corrections: false,
+        });
+        await quadrantDayData.save();
+      }
       res.json({
         msg: "Jornada creada correctamente",
       });
     } catch (error) {
+      console.log(error);
       return res
         .status(400)
         .json({ error: "Ha habido un error creando el día" });
@@ -1268,4 +1474,9 @@ const saveDocument = async (doc, filePath) => {
     fs.writeFileSync(filePath, buffer);
     console.log(`El archivo ${filePath} ha sido creado exitosamente.`);
   });
+};
+
+const getSpanishTime = (year, month, day, hour, minutes) => {
+  const date = new Date(Date.UTC(year, month, day, hour, minutes));
+  return date;
 };
