@@ -1310,6 +1310,7 @@ exports.createRacesByDate = async (req, res) => {
                   distance: racePMHResponseParsed.distance,
                   raceType: racePMHResponseParsed.categ_course,
                   surface: racingTrack,
+                  value: 'prov',
                   date: isoDate,
                   isPMH: true,
                   bonnet: participants[j].bonnet,
