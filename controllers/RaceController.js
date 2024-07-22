@@ -1109,7 +1109,7 @@ exports.createRacesByDate = async (req, res) => {
           raceInfo.numOrdre,
           isoDate.toISOString()
         );
-        if (existingRace) {
+        if (!existingRace) {
           const raceData = new Race({
             racecourseCode: raceInfo.hippodrome.codeHippodrome,
             racecourse: raceInfo.hippodrome.libelleCourt,
