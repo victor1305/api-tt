@@ -17,6 +17,26 @@ const {
 } = require("docx");
 const fs = require("fs");
 
+exports.getRacesByHorse = async (req, res, next) => {
+  const horseData = req.body;
+
+  try {
+    const horses = await Horse.find({
+      name: horseData.horseName.toUpperCase(),
+      ...(horseData.horseAge && {
+        year: new Date().getFullYear() - horseData.horseAge,
+      }),
+    }).populate({
+      path: "values",
+      options: { sort: { date: -1 } },
+    });
+    res.json(horses);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.createOldPrevValues = async (req, res, next) => {
   const horses = req.body;
 
@@ -1310,7 +1330,7 @@ exports.createRacesByDate = async (req, res) => {
                   distance: racePMHResponseParsed.distance,
                   raceType: racePMHResponseParsed.categ_course,
                   surface: racingTrack,
-                  value: 'prov',
+                  value: "prov",
                   date: isoDate,
                   isPMH: true,
                   bonnet: participants[j].bonnet,
