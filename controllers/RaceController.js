@@ -705,12 +705,25 @@ exports.actualizar = async (req, res) => {
 };
 
 exports.editValue = async (req, res) => {
-  const value = req.body.value;
+  let value = req.body.value;
+  const field = req.body.field;
   const valueID = req.params.id;
+
+  if (field === "corde") {
+    value = value.includes("derecha")
+      ? "CORDE_DROITE"
+      : value.includes("izquierda")
+      ? "CORDE_GAUCHE"
+      : "LIGNE DROITE";
+  }
+
+  if (field === "jockey" || field === "trainer" || field === "raceType") {
+    value = value.toUpperCase().trim();
+  }
 
   try {
     const valueData = await HorseRace.findById(valueID);
-    valueData.value = value;
+    valueData[field] = value;
     await valueData.save();
 
     res.json(valueData);
@@ -1342,7 +1355,6 @@ exports.createRacesByDate = async (req, res) => {
                 horseData.values = horseData.values.concat(
                   horseRaceDataSaved._id
                 );
-                horseData.races = horseData.races.concat(raceData._id);
                 await horseData.save();
               }
             }
