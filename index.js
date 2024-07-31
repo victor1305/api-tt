@@ -43,12 +43,14 @@ const authRoutes = require('./routes/user.routes')
 const betsRoutes = require('./routes/bets.routes')
 const clientsRoutes = require('./routes/client.routes')
 const racesRoutes = require('./routes/races.routes')
+const summerRoutes = require('./routes/summer.routes')
 
 // route middlewares
 app.use('/api', authRoutes)
 app.use('/api/apuestas', betsRoutes)
 app.use('/api/clientes', clientsRoutes)
 app.use('/api/races', racesRoutes)
+app.use('/api/summer', summerRoutes)
 
 // iniciar server
 const PORT = process.env.PORT || 3030;
