@@ -25,6 +25,8 @@ const whitelist = [
     "https://cms-tt-front.herokuapp.com",
     "https://cms-tt-static.onrender.com",
     "https://tt-cms-next.vercel.app",
+    "https://summer2024-victor1305s-projects.vercel.app/",
+    "https://summer2024-three.vercel.app",
     "https://cms-tt.onrender.com",
     "http://127.0.0.1:4040/"
 ]
