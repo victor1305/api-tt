@@ -6,7 +6,6 @@ const SummerUsers = require("../models/SummerUsers");
 const SummerEvents = require("../models/SummerEvents");
 
 exports.login = async (req, res) => {
-  console.log('ENMTRAAAAAAA')
   const user = await SummerUsers.findOne({ email: req.body.email });
   if (!user)
     return res.status(400).json({ error: "Usuario o contraseña erroneo" });
@@ -33,7 +32,6 @@ exports.login = async (req, res) => {
 };
 
 exports.getEvents = async (req, res) => {
-  console.log('ENMTRAAAAAAA')
   const today = new Date();
   const currentMonth = today.getMonth();
   let day = 0;
@@ -61,7 +59,6 @@ exports.getEvents = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
   const event = req.body;
-  console.log('ENMTRAAAAAAA')
   try {
     const eventData = new SummerEvents(event);
     await eventData.save()
@@ -80,7 +77,6 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   const { eventId } = req.params;
   const updatedEventData = req.body;
-  console.log('ENMTRAAAAAAA')
 
   try {
     const updatedEvent = await SummerEvents.findByIdAndUpdate(
@@ -98,7 +94,6 @@ exports.removeEvent = async (req, res) => {
   const userId = req.params.userId;
   const dayId = req.params.dayId;
   const eventId = req.params.eventId;
-  console.log('ENMTRAAAAAAA')
 
   try {
     await SummerEvents.findByIdAndDelete(eventId);
