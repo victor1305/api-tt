@@ -21,6 +21,9 @@ const summerEventsSchema = new Schema(
     finishMinute: {
       type: String,
     },
+    link: {
+      type: String
+    },
     assistants: [String],
     createdBy: {
       type: mongoose.ObjectId,
