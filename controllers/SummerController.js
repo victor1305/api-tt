@@ -61,13 +61,31 @@ exports.createEvent = async (req, res) => {
   const event = req.body;
   try {
     const eventData = new SummerEvents(event);
-    await eventData.save()
+    await eventData.save();
     const userData = await SummerUsers.findById(event.createdBy);
     userData.eventsCreated = userData.eventsCreated.concat(eventData._id);
-    await userData.save()
+    await userData.save();
     const dayData = await SummerDays.findById(event.day);
     dayData.events = dayData.events.concat(eventData._id);
-    await dayData.save()
+    await dayData.save();
+    const allUsers = await SummerUsers.find();
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: "elexceldevicks@gmail.com",
+        pass: process.env.MAIL_SUMMER_PASS,
+      },
+    });
+    for (const user of allUsers) {
+      const mailOptions = {
+        from: "elexceldevicks@gmail.com",
+        to: user.email,
+        subject: "Nuevo evento creado",
+        text: `Hola ${user.name},\n\nSe ha creado un nuevo evento: ${event.title}.\n\nFecha: El día ${dayData.day} de Agosto a las ${event.startHour}:${event.startMinute}\n\nSaludos,\nEl Excel de Vicks`,
+      };
+
+      await transporter.sendMail(mailOptions);
+    }
     res.status(200).json(eventData);
   } catch (error) {
     return res.status(500).json({ error: "Error al crear evento" });
