@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const ms = require("ms");
-
+const nodemailer = require("nodemailer");
 const SummerDays = require("../models/SummerDays");
 const SummerUsers = require("../models/SummerUsers");
 const SummerEvents = require("../models/SummerEvents");
@@ -71,6 +71,9 @@ exports.createEvent = async (req, res) => {
     const allUsers = await SummerUsers.find();
     const transporter = nodemailer.createTransport({
       service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: "elexceldevicks@gmail.com",
         pass: process.env.MAIL_SUMMER_PASS,
