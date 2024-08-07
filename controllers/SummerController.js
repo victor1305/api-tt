@@ -80,18 +80,14 @@ exports.createEvent = async (req, res) => {
       },
     });
     for (const user of allUsers) {
+      const mailOptions = {
+        from: "elexceldevicks@gmail.com",
+        to: user.email,
+        subject: "Nuevo evento creado",
+        text: `Hola ${user.name},\n\nSe ha creado un nuevo evento: ${event.title}.\n\nFecha: El día ${dayData.day} de Agosto a las ${event.startHour}:${event.startMinute}\n\nSaludos,\nEl Excel de Vicks`,
+      };
 
-      if (user.email === "victor1305@icloud.com") {
-
-        const mailOptions = {
-          from: "elexceldevicks@gmail.com",
-          to: user.email,
-          subject: "Nuevo evento creado",
-          text: `Hola ${user.name},\n\nSe ha creado un nuevo evento: ${event.title}.\n\nFecha: El día ${dayData.day} de Agosto a las ${event.startHour}:${event.startMinute}\n\nSaludos,\nEl Excel de Vicks`,
-        };
-  
-        await transporter.sendMail(mailOptions);
-      }
+      await transporter.sendMail(mailOptions);
     }
     res.status(200).json(eventData);
   } catch (error) {
