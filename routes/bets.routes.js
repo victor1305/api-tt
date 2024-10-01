@@ -7,6 +7,7 @@ router.post('/crear-apuesta', verifyToken, BetController.saveBet) // PROTEGER
 router.post('/crear-apuesta-personal', verifyToken, BetController.savePersonalBet) // PROTEGER
 router.post('/crear-parametro', verifyToken, BetController.saveParameter) // PROTEGER
 router.get('/', BetController.readHomeBets)
+router.get('/pruebas-querys', BetController.pruebas)
 router.get('/lista-apuestas/total', BetController.numberBets)
 router.get('/lista-apuestas/', BetController.betsList)
 router.get('/lista-apuestas-mes/', BetController.getBetByMonth)

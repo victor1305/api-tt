@@ -761,6 +761,8 @@ exports.createHorseRace = async (req, res) => {
       ...(race.notes && { notes: race.notes }),
       ...(race.position && { position: race.position }),
       ...(race.measurement && { measurement: race.measurement }),
+      ...(race.bonnet && {bonnet: race.bonnet}),
+      ...(race.attacheLangue && {attacheLangue: race.attacheLangue}),
       mud: race.mud,
       surface: race.surface,
       date: race.date,
@@ -1287,7 +1289,7 @@ exports.createRacesByDate = async (req, res) => {
         const racePMHResponseParsed = await racePMHResponse.json();
         let racingTrack = "Hierba";
         const participants = racePMHResponseParsed.partants;
-        if (racePMHResponseParsed.lib_piste_course.toLowerCase() !== "herbe") {
+        if (racePMHResponseParsed.lib_piste_course.toLowerCase() !== "herbe" || racePMHResponseParsed.reunion.lib_reunion.toLowerCase() === 'pompadour') {
           racingTrack = "PSF";
         }
 
@@ -1507,6 +1509,40 @@ const createDocument = (data, title) => {
   });
 
   return doc;
+};
+
+exports.removeValue = async (req, res) => {
+  const { horseId, horseRaceId } = req.params;
+
+  try {
+    // Paso 1: Buscar el HorseRace y eliminarlo
+    const deletedHorseRace = await HorseRace.findByIdAndDelete(horseRaceId);
+
+    if (!deletedHorseRace) {
+      return res.status(404).json({ message: "HorseRace no encontrado" });
+    }
+
+    // Paso 2: Actualizar el Horse eliminando la referencia al HorseRace en values
+    const updatedHorse = await Horse.findByIdAndUpdate(
+      horseId,
+      {
+        $pull: { values: horseRaceId }, // Elimina la referencia en la lista de values
+      },
+      { new: true } // Devuelve el documento actualizado
+    );
+
+    if (!updatedHorse) {
+      return res.status(404).json({ message: "Caballo no encontrado" });
+    }
+
+    res.json({
+      message: "HorseRace eliminado y caballo actualizado correctamente",
+      updatedHorse,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error eliminando la carrera" });
+  }
 };
 
 const saveDocument = async (doc, filePath) => {

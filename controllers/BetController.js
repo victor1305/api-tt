@@ -364,13 +364,12 @@ exports.getBetsByDay = async (req, res, next) => {
       },
     });
     res.json({
-      data: betList ,
+      data: betList,
     });
   } catch (error) {
     res.status(400).json(error);
   }
 };
-
 
 exports.getPersonalBetsByDay = async (req, res, next) => {
   const month = req.query.month;
@@ -390,7 +389,7 @@ exports.getPersonalBetsByDay = async (req, res, next) => {
       },
     });
     res.json({
-      data: personalBetsList ,
+      data: personalBetsList,
     });
   } catch (error) {
     res.status(400).json(error);
@@ -600,14 +599,20 @@ exports.statsByYearMonthAndType = async (req, res) => {
   try {
     const betList = await Bet.find({
       date: {
-        $gte: month !== '00' ? `${year}-${month}-01T00:00:00Z` : `${year}-01-01T00:00:00Z`,
-        $lte: month !== '00' ? `${month === '12' ? parseInt(year) + 1 : year}-${
-          parseInt(month) + 1 > 9 && parseInt(month) < 12
-            ? parseInt(month) + 1
-            : parseInt(month) > 11
-            ? '01'
-            : `0${parseInt(month) + 1}`
-        }-01T00:00:00.000Z` : `${year}-12-31T23:59:59Z`
+        $gte:
+          month !== "00"
+            ? `${year}-${month}-01T00:00:00Z`
+            : `${year}-01-01T00:00:00Z`,
+        $lte:
+          month !== "00"
+            ? `${month === "12" ? parseInt(year) + 1 : year}-${
+                parseInt(month) + 1 > 9 && parseInt(month) < 12
+                  ? parseInt(month) + 1
+                  : parseInt(month) > 11
+                  ? "01"
+                  : `0${parseInt(month) + 1}`
+              }-01T00:00:00.000Z`
+            : `${year}-12-31T23:59:59Z`,
       },
       status: { $ne: "pending" },
     });
@@ -666,7 +671,7 @@ exports.statsByYearMonthAndType = async (req, res) => {
 
     const betsArr = loopArray.filter((elm) => elm.bets > 0);
     if (type !== "stake") betsArr.sort((a, b) => b.profit - a.profit);
-    
+
     res.json({
       data: betsArr,
     });
@@ -814,6 +819,41 @@ exports.editBetStatus = async (req, res, next) => {
   Bet.findByIdAndUpdate(req.params.id, statusProcessed, { new: true })
     .then((bet) => res.json(bet))
     .catch((err) => next(err));
+};
+
+exports.pruebas = async (req, res, next) => {
+  try {
+    const result = await Bet.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              { $eq: [{ $year: "$date" }, 2024] }, // Bets del año 2024
+              { $in: [{ $month: "$date" }, [1, 5, 6]] } // Solo enero, mayo y junio
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            day: { $dayOfMonth: "$date" }, // Agrupar por día
+            month: { $month: "$date" },    // Agrupar por mes
+            year: { $year: "$date" },      // Agrupar por año (2024)
+          },
+          totalProfit: { $sum: "$profit" }, // Sumar el profit diario
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } // Ordenar por fecha
+      }
+    ]);
+    console.log(result);
+    res.json(result); // Devolver el resultado al cliente
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error al realizar la consulta" });
+  }
 };
 
 exports.editBet = async (req, res, next) => {
