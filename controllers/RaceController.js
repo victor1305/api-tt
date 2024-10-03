@@ -761,8 +761,8 @@ exports.createHorseRace = async (req, res) => {
       ...(race.notes && { notes: race.notes }),
       ...(race.position && { position: race.position }),
       ...(race.measurement && { measurement: race.measurement }),
-      ...(race.bonnet && {bonnet: race.bonnet}),
-      ...(race.attacheLangue && {attacheLangue: race.attacheLangue}),
+      ...(race.bonnet && { bonnet: race.bonnet }),
+      ...(race.attacheLangue && { attacheLangue: race.attacheLangue }),
       mud: race.mud,
       surface: race.surface,
       date: race.date,
@@ -1289,7 +1289,11 @@ exports.createRacesByDate = async (req, res) => {
         const racePMHResponseParsed = await racePMHResponse.json();
         let racingTrack = "Hierba";
         const participants = racePMHResponseParsed.partants;
-        if (racePMHResponseParsed.lib_piste_course.toLowerCase() !== "herbe" || racePMHResponseParsed.reunion.lib_reunion.toLowerCase() === 'pompadour') {
+        if (
+          racePMHResponseParsed.lib_piste_course.toLowerCase() !== "herbe" ||
+          racePMHResponseParsed.reunion.lib_reunion.toLowerCase() ===
+            "pompadour"
+        ) {
           racingTrack = "PSF";
         }
 
@@ -1309,14 +1313,15 @@ exports.createRacesByDate = async (req, res) => {
               table: "FRA",
             });
             if (horseData) {
+              const startOfDay = new Date(year, month, day, 0, 0, 0, 0); // Inicio del día (00:00)
+              const endOfDay = new Date(year, month, day, 23, 59, 59, 999); // Fin del día (23:59)
+
               const checkRace = await HorseRace.findOne({
-                horse: horseData._id,
-                $expr: {
-                  $and: [
-                    { $eq: [{ $dayOfMonth: "$date" }, day] },
-                    { $eq: [{ $month: "$date" }, month] }, // getMonth() devuelve el mes (0-11), así que sumamos 1
-                    { $eq: [{ $year: "$date" }, year] },
-                  ],
+                horse: horseData._id, // Filtra por ID del caballo
+                date: {
+                  // Comprobar si la carrera está en ese día
+                  $gte: startOfDay, // Fecha mayor o igual al inicio del día
+                  $lt: endOfDay, // Fecha menor al final del día
                 },
               });
               const time = new Date(racePMHResponseParsed.real_heure_course);
@@ -1359,6 +1364,46 @@ exports.createRacesByDate = async (req, res) => {
                 );
                 await horseData.save();
               }
+            } else {
+              const newHorse = new Horse({
+                name: participants[j].nom_cheval.toUpperCase(),
+                year: new Date().getFullYear() - participants[j].age_cheval,
+                table: "FRA",
+              });
+              const newHorseSaved = await newHorse.save();
+              const horseRaceData = new HorseRace({
+                number: participants[j].num_partant,
+                horse: newHorseSaved._id,
+                complements:
+                  participants[j].oeil_partant === "O"
+                    ? "BR"
+                    : participants[j].oeil_partant === "A"
+                    ? "CA"
+                    : "",
+                box: parseInt(participants[j].place_corde_partant),
+                jockey: participants[j].monte.nom_monte,
+                unload: participants[j].pds_cond_monte_partant,
+                weight: participants[j].pds_calc_hand_partant,
+                trainer: participants[j].entraineur.nom_entraineur,
+                racecourseCode: racePMHResponseParsed.reunion.lib_reunion,
+                racecourse: racePMHResponseParsed.reunion.lib_reunion,
+                corde: racePMHResponseParsed.lib_corde_course.toUpperCase(),
+                race: racePMHResponseParsed.num_course_pmu,
+                distance: racePMHResponseParsed.distance,
+                raceType: racePMHResponseParsed.categ_course,
+                surface: racingTrack,
+                value: "prov",
+                date: isoDate,
+                isPMH: true,
+                bonnet: participants[j].bonnet,
+                attacheLangue: participants[j].attache_langue,
+                ...(participants[j].type_eng === "S" && { supplement: true }),
+              });
+              const horseRaceDataSaved = await horseRaceData.save();
+              newHorseSaved.values = newHorseSaved.values.concat(
+                horseRaceDataSaved._id
+              );
+              await newHorseSaved.save();
             }
           }
         }
@@ -1542,6 +1587,73 @@ exports.removeValue = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error eliminando la carrera" });
+  }
+};
+
+exports.removeDuplicates = async (req, res, next) => {
+  try {
+    // Encuentra todas las carreras agrupadas por caballo y fecha
+    const duplicados = await HorseRace.aggregate([
+      {
+        $group: {
+          _id: { horse: "$horse", date: "$date" },
+          ids: { $push: "$_id" }, // Almacena los IDs de las carreras
+          values: { $push: "$value" }, // Almacena los valores para filtrarlos después
+          count: { $sum: 1 }, // Cuenta cuántas carreras tienen mismo caballo y fecha
+        },
+      },
+      {
+        $match: { count: { $gt: 1 } }, // Solo las que están duplicadas
+      },
+    ]);
+
+    // Iterar sobre los duplicados encontrados
+    for (const duplicado of duplicados) {
+      const ids = duplicado.ids;
+      const values = duplicado.values;
+
+      // Filtrar las carreras con `value === "prov"`
+      const provIds = ids.filter((_, index) => values[index] === "prov");
+
+      if (provIds.length > 1) {
+        // Si hay más de una carrera con `value === "prov"`, eliminamos todas menos una
+        for (let i = 1; i < provIds.length; i++) {
+          const idToDelete = provIds[i];
+          await HorseRace.findByIdAndDelete(idToDelete);
+
+          // También eliminar la referencia en el modelo Horse
+          await Horse.updateMany(
+            { values: idToDelete },
+            { $pull: { values: idToDelete } }
+          );
+        }
+      } else if (provIds.length === 1) {
+        // Si hay solo una carrera con "prov", la eliminamos preferentemente
+        const idToDelete = provIds[0];
+        await HorseRace.findByIdAndDelete(idToDelete);
+
+        // Eliminar la referencia en el modelo Horse
+        await Horse.updateMany(
+          { values: idToDelete },
+          { $pull: { values: idToDelete } }
+        );
+      } else {
+        // Si no hay ninguna con "prov", eliminamos la primera entrada encontrada
+        const idToDelete = ids[0];
+        await HorseRace.findByIdAndDelete(idToDelete);
+
+        // Eliminar la referencia en el modelo Horse
+        await Horse.updateMany(
+          { values: idToDelete },
+          { $pull: { values: idToDelete } }
+        );
+      }
+    }
+
+    res.json({ message: "Duplicados eliminados con éxito" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar duplicados" });
   }
 };
 

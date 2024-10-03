@@ -20,6 +20,7 @@ router.get('/cargar-cuadrantes-por-dia/:date', RaceController.getRacesByDate)
 router.get('/cargar-carreras-por-mes/:year/:month', RaceController.getRacesNumberByMonth)
 router.get('/cargar-estados-por-mes/:year/:month', RaceController.getDayControlByMonth)
 router.get('/cargar-estados-por-dia/:date', RaceController.getDayControlByDay)
+router.delete('/borrar-duplicados', RaceController.removeDuplicates)
 router.delete('/borrar-valor/:horseId/:horseRaceId', verifyToken, RaceController.removeValue) // PROTEGER
 
 module.exports = router
