@@ -81,6 +81,7 @@ exports.getDrivesCorrections = async (req, res, next) => {
   try {
     for (let i = 0; i < horses.length; i++) {
       if (horses[i].age) {
+        console.log(horses[i].horseName.toUpperCase());
         const horseData = await Horse.findOne({
           name: horses[i].horseName.toUpperCase(),
           year: new Date().getFullYear() - parseInt(horses[i].age),
@@ -103,11 +104,12 @@ exports.getDrivesCorrections = async (req, res, next) => {
               $lt: endOfDay,
             },
           });
+          if (raceData) {
+            raceData.value = horses[i].value;
+            raceData.mud = horses[i].mud;
 
-          raceData.value = horses[i].value;
-          raceData.mud = horses[i].mud;
-
-          await raceData.save();
+            await raceData.save();
+          }
         }
       }
     }
