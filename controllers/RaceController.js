@@ -1314,6 +1314,10 @@ exports.createRacesByDate = async (req, res) => {
                 new Date().getFullYear() - participants[j].cheval.age_cheval,
               table: "FRA",
             });
+            const time = new Date(racePMHResponseParsed.real_heure_course);
+            const hour = time.getHours();
+            const minutes = time.getMinutes();
+            const isoDate = getSpanishTime(year, month, day, hour, minutes);
             if (horseData) {
               const startOfDay = new Date(year, month, day, 0, 0, 0, 0); // Inicio del día (00:00)
               const endOfDay = new Date(year, month, day, 23, 59, 59, 999); // Fin del día (23:59)
@@ -1326,10 +1330,6 @@ exports.createRacesByDate = async (req, res) => {
                   $lt: endOfDay, // Fecha menor al final del día
                 },
               });
-              const time = new Date(racePMHResponseParsed.real_heure_course);
-              const hour = time.getHours();
-              const minutes = time.getMinutes();
-              const isoDate = getSpanishTime(year, month, day, hour, minutes);
               if (!checkRace) {
                 const horseRaceData = new HorseRace({
                   number: participants[j].num_partant,
@@ -1368,8 +1368,9 @@ exports.createRacesByDate = async (req, res) => {
               }
             } else {
               const newHorse = new Horse({
-                name: participants[j].nom_cheval.toUpperCase(),
-                year: new Date().getFullYear() - participants[j].age_cheval,
+                name: participants[j].cheval.nom_cheval.toUpperCase(),
+                year:
+                  new Date().getFullYear() - participants[j].cheval.age_cheval,
                 table: "FRA",
               });
               const newHorseSaved = await newHorse.save();
@@ -1389,7 +1390,7 @@ exports.createRacesByDate = async (req, res) => {
                 trainer: participants[j].entraineur.nom_entraineur,
                 racecourseCode: racePMHResponseParsed.reunion.lib_reunion,
                 racecourse: racePMHResponseParsed.reunion.lib_reunion,
-                corde: racePMHResponseParsed.lib_corde_course.toUpperCase(),
+                corde: racePMHResponseParsed.lib_corde_course?.toUpperCase(),
                 race: racePMHResponseParsed.num_course_pmu,
                 distance: racePMHResponseParsed.distance,
                 raceType: racePMHResponseParsed.categ_course,
