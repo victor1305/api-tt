@@ -1158,9 +1158,8 @@ exports.createRacesByDate = async (req, res) => {
             time: timeFormated,
             corde: raceInfo.corde,
           });
-
           for (let j = 0; j < participants.length; j++) {
-            if (participants[j].race === "PUR-SANG") {
+            if (participants.some((elm => elm.race === "PUR-SANG"))) {
               const horseData = await Horse.findOne({
                 name: participants[j].nom.toUpperCase(),
                 year: new Date().getFullYear() - participants[j].age,
@@ -1213,7 +1212,6 @@ exports.createRacesByDate = async (req, res) => {
                     participants[j].nomPereMere.toUpperCase() || "";
                   horseData.genre = participants[j].sexe.toUpperCase() || "";
                 }
-
                 const horseRaceDataSaved = await horseRaceData.save();
                 horseData.values = horseData.values.concat(
                   horseRaceDataSaved._id
@@ -1263,7 +1261,6 @@ exports.createRacesByDate = async (req, res) => {
                   ...(participants[j].supplement > 0 && { supplement: true }),
                   ...(participants[j].indicateurInedit && { debut: true }),
                 });
-
                 const horseRaceDataSaved = await horseRaceData.save();
                 newHorseSaved.values = newHorseSaved.values.concat(
                   horseRaceDataSaved._id
