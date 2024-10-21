@@ -1344,7 +1344,7 @@ exports.createRacesByDate = async (req, res) => {
                   trainer: participants[j].entraineur.nom_entraineur,
                   racecourseCode: racePMHResponseParsed.reunion.lib_reunion,
                   racecourse: racePMHResponseParsed.reunion.lib_reunion,
-                  corde: racePMHResponseParsed.lib_corde_course.toUpperCase(),
+                  corde: racePMHResponseParsed.lib_corde_course?.toUpperCase(),
                   race: racePMHResponseParsed.num_course_pmu,
                   distance: racePMHResponseParsed.distance,
                   raceType: racePMHResponseParsed.categ_course,
