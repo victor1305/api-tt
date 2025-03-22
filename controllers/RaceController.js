@@ -1055,12 +1055,12 @@ exports.createRacesByDate = async (req, res) => {
   const listPMHReunions = [];
   for (let i = 0; i < racesPMHParsed.length; i++) {
     if (
-      racesPMHParsed[i].pays_site_reunion.toUpperCase() === "FRA" &&
-      racesPMHParsed[i].specialite_reunion.toLowerCase() !== "trot"
+      racesPMHParsed[i].pays_site_reunion?.toUpperCase() === "FRA" &&
+      racesPMHParsed[i].specialite_reunion?.toLowerCase() !== "trot"
     ) {
       for (let j = 0; j < racesPMHParsed[i].courses_by_day.length; j++) {
         if (
-          racesPMHParsed[i].courses_by_day[j].discipline.toLowerCase() ===
+          racesPMHParsed[i].courses_by_day[j].discipline?.toLowerCase() ===
             "plat" &&
           racesPMHParsed[i].courses_by_day[j].is_pmh
         ) {

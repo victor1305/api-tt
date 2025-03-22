@@ -10,7 +10,7 @@ app.use(bodyparser.urlencoded({ extended: false }));
 app.use(bodyparser.json());
 
 // Conexión a Base de datos
-const uri = `mongodb+srv://${process.env.CLUSTERUSER}:${process.env.PASSWORD}@cluster0.9xqd9.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`
+const uri = `mongodb+srv://${process.env.CLUSTERUSER}:${process.env.PASSWORD}@cluster0.9xqd9.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority&ssl=true&replicaSet=atlas-8-shard-0&authSource=admin&retryReads=true`
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
 mongoose.connect(uri, option)
 .then(() => console.log('Base de datos conectada'))
