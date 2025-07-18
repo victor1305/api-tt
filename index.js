@@ -56,6 +56,11 @@ app.use('/api/summer', summerRoutes)
 
 // iniciar server
 const PORT = process.env.PORT || 3030;
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'UP' });
+})
+
 app.listen(PORT, () => {
     console.log(`servidor corriendo en el puerto: ${PORT}`)
 })
