@@ -161,69 +161,19 @@ exports.getDayControlByMonth = async (req, res) => {
 
 exports.createTablesDocx = async (req, res) => {
   const date = req.body.date;
-  try {
-    const horses2022 = await Horse.find({ year: 2022, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2021 = await Horse.find({ year: 2021, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2020 = await Horse.find({ year: 2020, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2019 = await Horse.find({ year: 2019, table: "FRA" }).populate(
-      "values"
-    );
-    const horses2018 = await Horse.find({ year: 2018, table: "FRA" }).populate(
-      "values"
-    );
+  const years = [2023, 2022, 2021, 2020, 2019, 2018];
+  const filenames = [];
 
-    const sortedHorses = (horses) =>
+  try {
+    for (const year of years) {
+      const horses = await Horse.find({ year, table: "FRA" }).populate("values");
       horses.sort((a, b) => a.name.localeCompare(b.name));
 
-    const doc2022 = createDocument(
-      sortedHorses(horses2022),
-      `Caballos ${new Date().getFullYear() - 2022} años`
-    );
-    const doc2021 = createDocument(
-      sortedHorses(horses2021),
-      `Caballos ${new Date().getFullYear() - 2021} años`
-    );
-    const doc2020 = createDocument(
-      sortedHorses(horses2020),
-      `Caballos ${new Date().getFullYear() - 2020} años`
-    );
-    const doc2019 = createDocument(
-      sortedHorses(horses2019),
-      `Caballos ${new Date().getFullYear() - 2019} años`
-    );
-    const doc2018 = createDocument(
-      sortedHorses(horses2018),
-      `Caballos ${new Date().getFullYear() - 2018} años`
-    );
-
-    await Promise.all([
-      saveDocument(
-        doc2022,
-        `Caballos ${new Date().getFullYear() - 2022} años.docx`
-      ),
-      saveDocument(
-        doc2021,
-        `Caballos ${new Date().getFullYear() - 2021} años.docx`
-      ),
-      saveDocument(
-        doc2020,
-        `Caballos ${new Date().getFullYear() - 2020} años.docx`
-      ),
-      saveDocument(
-        doc2019,
-        `Caballos ${new Date().getFullYear() - 2019} años.docx`
-      ),
-      saveDocument(
-        doc2018,
-        `Caballos ${new Date().getFullYear() - 2018} años.docx`
-      ),
-    ]);
+      const doc = createDocument(horses, `Caballos ${new Date().getFullYear() - year} años`);
+      const filename = `Caballos ${new Date().getFullYear() - year} años.docx`;
+      filenames.push(filename);
+      await saveDocument(doc, filename);
+    }
 
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -241,70 +191,34 @@ exports.createTablesDocx = async (req, res) => {
       to: "partipral@hotmail.com,congeladoseltimon@gmail.com,victor1305@hotmail.com",
       subject: `Tablas actualizadas a ${date}`,
       text: "Tablas actualizadas.",
-      attachments: [
-        {
-          filename: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
-          path: `Caballos ${new Date().getFullYear() - 2022} años.docx`,
-        },
-        {
-          filename: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
-          path: `Caballos ${new Date().getFullYear() - 2021} años.docx`,
-        },
-        {
-          filename: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
-          path: `Caballos ${new Date().getFullYear() - 2020} años.docx`,
-        },
-        {
-          filename: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
-          path: `Caballos ${new Date().getFullYear() - 2019} años.docx`,
-        },
-        {
-          filename: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
-          path: `Caballos ${new Date().getFullYear() - 2018} años.docx`,
-        },
-      ],
+      attachments: filenames.map((filename) => ({
+        filename,
+        path: filename,
+      })),
     };
 
     transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
-        console.log(error);
-        return res
-          .status(500)
-          .json({ message: "Error enviando el correo electrónico" });
+        console.error(error);
+        return res.status(500).json({ message: "Error enviando el correo electrónico" });
       }
+
       console.log("Correo enviado: " + info.response);
 
-      // Borrar los archivos después de enviar el correo electrónico
       try {
-        await Promise.all([
-          fs.promises.unlink(
-            `Caballos ${new Date().getFullYear() - 2022} años.docx`
-          ),
-          fs.promises.unlink(
-            `Caballos ${new Date().getFullYear() - 2021} años.docx`
-          ),
-          fs.promises.unlink(
-            `Caballos ${new Date().getFullYear() - 2020} años.docx`
-          ),
-          fs.promises.unlink(
-            `Caballos ${new Date().getFullYear() - 2019} años.docx`
-          ),
-          fs.promises.unlink(
-            `Caballos ${new Date().getFullYear() - 2018} años.docx`
-          ),
-        ]);
+        await Promise.all(filenames.map((filename) => fs.promises.unlink(filename)));
         console.log("Archivos borrados después de enviar el correo.");
         res.status(200).json("Email enviado y archivos borrados correctamente");
       } catch (deleteError) {
-        console.log(deleteError);
+        console.error(deleteError);
         res.status(500).json({ message: "Error borrando los archivos" });
       }
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-};
+}
 
 exports.getDayControlByDay = async (req, res) => {
   const date = req.params.date;
@@ -1658,10 +1572,14 @@ exports.removeDuplicates = async (req, res, next) => {
 };
 
 const saveDocument = async (doc, filePath) => {
-  return Packer.toBuffer(doc).then((buffer) => {
-    fs.writeFileSync(filePath, buffer);
-    console.log(`El archivo ${filePath} ha sido creado exitosamente.`);
-  });
+  try {
+    const buffer = await Packer.toBuffer(doc);
+    await fs.promises.writeFile(filePath, buffer);
+    console.log(`✅ Archivo guardado: ${filePath}`);
+  } catch (error) {
+    console.error(`❌ Error guardando el archivo ${filePath}:`, error);
+    throw error;
+  }
 };
 
 const getSpanishTime = (year, month, day, hour, minutes) => {
