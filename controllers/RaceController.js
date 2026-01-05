@@ -166,10 +166,15 @@ exports.createTablesDocx = async (req, res) => {
 
   try {
     for (const year of years) {
-      const horses = await Horse.find({ year, table: "FRA" }).populate("values");
+      const horses = await Horse.find({ year, table: "FRA" }).populate(
+        "values"
+      );
       horses.sort((a, b) => a.name.localeCompare(b.name));
 
-      const doc = createDocument(horses, `Caballos ${new Date().getFullYear() - year} años`);
+      const doc = createDocument(
+        horses,
+        `Caballos ${new Date().getFullYear() - year} años`
+      );
       const filename = `Caballos ${new Date().getFullYear() - year} años.docx`;
       filenames.push(filename);
       await saveDocument(doc, filename);
@@ -200,13 +205,17 @@ exports.createTablesDocx = async (req, res) => {
     transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.error(error);
-        return res.status(500).json({ message: "Error enviando el correo electrónico" });
+        return res
+          .status(500)
+          .json({ message: "Error enviando el correo electrónico" });
       }
 
       console.log("Correo enviado: " + info.response);
 
       try {
-        await Promise.all(filenames.map((filename) => fs.promises.unlink(filename)));
+        await Promise.all(
+          filenames.map((filename) => fs.promises.unlink(filename))
+        );
         console.log("Archivos borrados después de enviar el correo.");
         res.status(200).json("Email enviado y archivos borrados correctamente");
       } catch (deleteError) {
@@ -218,7 +227,7 @@ exports.createTablesDocx = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 exports.getDayControlByDay = async (req, res) => {
   const date = req.params.date;
@@ -1073,7 +1082,7 @@ exports.createRacesByDate = async (req, res) => {
             corde: raceInfo.corde,
           });
           for (let j = 0; j < participants.length; j++) {
-            if (participants.some((elm => elm.race === "PUR-SANG"))) {
+            if (participants.some((elm) => elm.race === "PUR-SANG")) {
               const horseData = await Horse.findOne({
                 name: participants[j].nom.toUpperCase(),
                 year: new Date().getFullYear() - participants[j].age,
@@ -1568,6 +1577,179 @@ exports.removeDuplicates = async (req, res, next) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al eliminar duplicados" });
+  }
+};
+
+// Delete all data for a specific day given date in DDMMYYYY (e.g. 02012026)
+exports.deleteDayData = async (req, res) => {
+  const dateStr = req.body.date;
+  if (!dateStr || dateStr.length !== 8) {
+    return res
+      .status(400)
+      .json({ error: "Date must be provided in DDMMYYYY format" });
+  }
+
+  const day = parseInt(dateStr.substring(0, 2));
+  const month = parseInt(dateStr.substring(2, 4)) - 1;
+  const year = parseInt(dateStr.substring(4, 8));
+
+  const startOfDay = new Date(year, month, day, 0, 0, 0, 0);
+  const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
+
+  try {
+    // Find HorseRaces in the day range and populate horse name for validation
+    const horseRaces = await HorseRace.find({
+      date: { $gte: startOfDay, $lt: endOfDay },
+    }).populate("horse", "name createdAt");
+
+    const horseRaceIds = horseRaces.map((hr) => hr._id);
+    const affectedHorseIds = [
+      ...new Set(
+        horseRaces
+          .map((hr) => hr.horse && hr.horse._id && hr.horse._id.toString())
+          .filter(Boolean)
+      ),
+    ];
+    const affectedHorses = horseRaces
+      .map((hr) => hr.horse)
+      .filter(Boolean)
+      .map((h) => ({ id: h._id, name: h.name, createdAt: h.createdAt }));
+
+    // Remove HorseRace documents
+    if (horseRaceIds.length) {
+      await HorseRace.deleteMany({ _id: { $in: horseRaceIds } });
+
+      // Pull references from Horse.values
+      await Horse.updateMany(
+        { values: { $in: horseRaceIds } },
+        { $pull: { values: { $in: horseRaceIds } } }
+      );
+    }
+
+    // Find and remove Race documents in the day
+    const races = await Race.find({
+      date: { $gte: startOfDay, $lt: endOfDay },
+    });
+    const raceIds = races.map((r) => r._id);
+
+    if (raceIds.length) {
+      await Race.deleteMany({ _id: { $in: raceIds } });
+
+      // Pull race references from Horse.races
+      await Horse.updateMany(
+        { races: { $in: raceIds } },
+        { $pull: { races: { $in: raceIds } } }
+      );
+    }
+
+    // Optionally remove Horses that were created that day and now have no values and no races
+    const horsesCreatedThatDay = await Horse.find({
+      createdAt: { $gte: startOfDay, $lt: endOfDay },
+    }).select("name createdAt");
+
+    const horsesToDelete = [];
+    const horsesCreatedMeta = [];
+    for (const horse of horsesCreatedThatDay) {
+      // refresh from DB in case updates touched them
+      const fresh = await Horse.findById(horse._id).select(
+        "name values races createdAt"
+      );
+      const hasValues = fresh.values && fresh.values.length > 0;
+      const hasRaces = fresh.races && fresh.races.length > 0;
+      horsesCreatedMeta.push({
+        id: fresh._id,
+        name: fresh.name,
+        createdAt: fresh.createdAt,
+        hasValues,
+        hasRaces,
+      });
+      if (!hasValues && !hasRaces) {
+        horsesToDelete.push(fresh._id);
+      }
+    }
+
+    if (horsesToDelete.length) {
+      await Horse.deleteMany({ _id: { $in: horsesToDelete } });
+    }
+
+    return res.json({
+      message: "Delete operation completed",
+      deleted: {
+        horseRaces: horseRaceIds.length,
+        races: raceIds.length,
+        horses: horsesToDelete.length,
+      },
+      affectedHorses,
+      horsesCreatedThatDay: horsesCreatedMeta,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Error deleting day data" });
+  }
+};
+
+// Force delete Horses created on a specific day (DDMMYYYY) — checks both local and UTC createdAt ranges
+exports.deleteHorsesCreatedOnDay = async (req, res) => {
+  const dateStr = req.body.date;
+  if (!dateStr || dateStr.length !== 8) {
+    return res
+      .status(400)
+      .json({ error: "Date must be provided in DDMMYYYY format" });
+  }
+
+  const day = parseInt(dateStr.substring(0, 2));
+  const month = parseInt(dateStr.substring(2, 4)) - 1;
+  const year = parseInt(dateStr.substring(4, 8));
+
+  // Local day range
+  const startLocal = new Date(year, month, day, 0, 0, 0, 0);
+  const endLocal = new Date(year, month, day, 23, 59, 59, 999);
+
+  // UTC day range (in case createdAt stored in UTC)
+  const startUTC = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  const endUTC = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+
+  try {
+    const horses = await Horse.find({
+      $or: [
+        { createdAt: { $gte: startLocal, $lt: endLocal } },
+        { createdAt: { $gte: startUTC, $lt: endUTC } },
+      ],
+    }).select("name createdAt");
+
+    const horseMeta = horses.map((h) => ({
+      id: h._id,
+      name: h.name,
+      createdAt: h.createdAt,
+    }));
+    const horseIds = horses.map((h) => h._id);
+
+    if (horseIds.length === 0) {
+      return res.json({
+        message: "No horses found for that day",
+        deleted: 0,
+        horses: [],
+      });
+    }
+
+    // If caller supplies { confirm: true } in body we perform deletion, otherwise just return list
+    if (req.body.confirm === true) {
+      await Horse.deleteMany({ _id: { $in: horseIds } });
+      return res.json({
+        message: "Horses deleted",
+        deleted: horseIds.length,
+        horses: horseMeta,
+      });
+    }
+
+    return res.json({
+      message: "Horses found (not deleted)",
+      deleted: 0,
+      horses: horseMeta,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Error deleting horses for the day" });
   }
 };
 

@@ -1,26 +1,46 @@
-const express = require("express")
-const router = express.Router()
-const RaceController = require('../controllers/RaceController')
-const verifyToken = require('../middlewares/validate-token')
+const express = require("express");
+const router = express.Router();
+const RaceController = require("../controllers/RaceController");
+const verifyToken = require("../middlewares/validate-token");
 
-router.post('/crear-caballo', RaceController.createHorse)
-router.post('/envio-viejos', RaceController.createOldPrevValues)
-router.post('/envio-restas-drive', RaceController.getDrivesRests)
-router.post('/envio-correcciones-drive', RaceController.getDrivesCorrections)
-router.post('/crear-dia-carreras', RaceController.createRacesByDate)
-router.post('/crear-carrera-caballo/:id', verifyToken, RaceController.createHorseRace)
-router.post('/actualizar-resultados-carrera', RaceController.addResultsByDate)
-router.post('/actualizar', RaceController.actualizar)
-router.post('/obtener-valores-drive', RaceController.getDriveValues)
-router.post('/generar-listas', RaceController.createTablesDocx)
-router.post('/cargar-carreras-por-caballo', RaceController.getRacesByHorse)
-router.put('/editar-valor/:id/edit', verifyToken, RaceController.editValue)
-router.put('/editar-dia/:id/edit', verifyToken, RaceController.updateDayControl)
-router.get('/cargar-cuadrantes-por-dia/:date', RaceController.getRacesByDate)
-router.get('/cargar-carreras-por-mes/:year/:month', RaceController.getRacesNumberByMonth)
-router.get('/cargar-estados-por-mes/:year/:month', RaceController.getDayControlByMonth)
-router.get('/cargar-estados-por-dia/:date', RaceController.getDayControlByDay)
-router.delete('/borrar-duplicados', RaceController.removeDuplicates)
-router.delete('/borrar-valor/:horseId/:horseRaceId', verifyToken, RaceController.removeValue) // PROTEGER
+router.post("/crear-caballo", RaceController.createHorse);
+router.post("/envio-viejos", RaceController.createOldPrevValues);
+router.post("/envio-restas-drive", RaceController.getDrivesRests);
+router.post("/envio-correcciones-drive", RaceController.getDrivesCorrections);
+router.post("/crear-dia-carreras", RaceController.createRacesByDate);
+router.post(
+  "/crear-carrera-caballo/:id",
+  verifyToken,
+  RaceController.createHorseRace
+);
+router.post("/actualizar-resultados-carrera", RaceController.addResultsByDate);
+router.post("/actualizar", RaceController.actualizar);
+router.post("/obtener-valores-drive", RaceController.getDriveValues);
+router.post("/generar-listas", RaceController.createTablesDocx);
+router.post("/cargar-carreras-por-caballo", RaceController.getRacesByHorse);
+router.post("/borrar-dia", RaceController.deleteDayData);
+router.post("/borrar-horses-dia", RaceController.deleteHorsesCreatedOnDay);
+router.put("/editar-valor/:id/edit", verifyToken, RaceController.editValue);
+router.put(
+  "/editar-dia/:id/edit",
+  verifyToken,
+  RaceController.updateDayControl
+);
+router.get("/cargar-cuadrantes-por-dia/:date", RaceController.getRacesByDate);
+router.get(
+  "/cargar-carreras-por-mes/:year/:month",
+  RaceController.getRacesNumberByMonth
+);
+router.get(
+  "/cargar-estados-por-mes/:year/:month",
+  RaceController.getDayControlByMonth
+);
+router.get("/cargar-estados-por-dia/:date", RaceController.getDayControlByDay);
+router.delete("/borrar-duplicados", RaceController.removeDuplicates);
+router.delete(
+  "/borrar-valor/:horseId/:horseRaceId",
+  verifyToken,
+  RaceController.removeValue
+); // PROTEGER
 
-module.exports = router
+module.exports = router;
